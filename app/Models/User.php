@@ -3,14 +3,14 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
+    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
     /**
@@ -22,6 +22,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'avatar',
     ];
 
     /**
@@ -45,5 +46,20 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Accessor for full Avatar Public URL using Laravel Storage disk.
+     */
+    public function getAvatarUrlAttribute(): string
+    {
+        $disk = config('profile.disk', 'public');
+
+        if ($this->avatar && Storage::disk($disk)->exists($this->avatar)) {
+            return asset('storage/' . $this->avatar);
+        }
+
+        $defaultPath = config('profile.default_avatar', 'assets/images/avatar-3d.png');
+        return asset($defaultPath);
     }
 }
