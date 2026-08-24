@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Auth;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -16,7 +16,7 @@ class ProfileController extends Controller
     public function index()
     {
         $user = Auth::user();
-        return view('auth.profile', compact('user'));
+        return view('admin.auth.profile', compact('user'));
     }
 
     /**

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Auth;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -17,7 +17,7 @@ class LoginController extends Controller
             return redirect()->route('dashboard');
         }
 
-        return view('auth.login');
+        return view('admin.auth.login');
     }
 
     /**
@@ -36,7 +36,7 @@ class LoginController extends Controller
             $request->session()->regenerate();
 
             return redirect()->intended(route('dashboard'))
-                ->with('success', 'Welcome back, Super Admin!');
+                ->with('success', 'Welcome back, Admin!');
         }
 
         return back()->withErrors([

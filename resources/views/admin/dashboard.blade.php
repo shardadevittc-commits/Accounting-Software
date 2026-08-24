@@ -1,13 +1,25 @@
-@extends('layouts.app')
+@php
+    $dashboardTitle = 'Admin Dashboard';
+    if (auth()->check()) {
+        if (auth()->user()->hasRole('sales') && !auth()->user()->isAdmin()) {
+            $dashboardTitle = 'Sales Dashboard';
+        } elseif (auth()->user()->hasRole('accountant') && !auth()->user()->isAdmin()) {
+            $dashboardTitle = 'Accountant Dashboard';
+        } elseif (auth()->user()->hasRole('purchase') && !auth()->user()->isAdmin()) {
+            $dashboardTitle = 'Purchase Dashboard';
+        }
+    }
+@endphp
 
-@section('title', 'Accounting & Finance ERP Dashboard - Tixx Accounts')
+@extends('admin.layouts.app')
+
+@section('title', $dashboardTitle . ' | Accounts ERP')
 
 @section('content')
 <!-- Dashboard Title Bar & Controls (Spacious Layout) -->
 <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4 pb-2 border-bottom">
     <div>
-        <h2 class="fw-extrabold text-dark fs-4 mb-0">Accounting Dashboard</h2>
-        <small class="text-muted fs-7"><i class="fa-solid fa-building me-1 text-primary"></i> {{ $user->company ?? 'Tixx Accounting ERP' }}</small>
+        <h2 class="fw-extrabold text-dark fs-4 mb-0">{{ $dashboardTitle }}</h2>
     </div>
 
     <div class="d-flex align-items-center flex-wrap gap-2">
@@ -54,30 +66,50 @@
             <span class="fw-bold fs-7 text-uppercase letter-spacing-1">Quick Actions</span>
         </div>
         <div class="quick-actions-buttons d-flex align-items-center flex-wrap gap-2">
+            @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['sales', 'accountant']) || auth()->user()->hasPermission('sales.create'))
             <button class="btn btn-primary btn-sm rounded-3 px-3 py-2 fw-semibold fs-7 shadow-sm">
                 <i class="fa-solid fa-plus me-1"></i> New Sale
             </button>
+            @endif
+
+            @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['purchase', 'accountant']) || auth()->user()->hasPermission('purchase.create'))
             <button class="btn btn-outline-primary btn-sm rounded-3 px-3 py-2 fw-semibold fs-7">
                 <i class="fa-solid fa-cart-plus me-1"></i> New Purchase
             </button>
+            @endif
+
+            @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['sales', 'accountant']) || auth()->user()->hasPermission('payments.create'))
             <button class="btn btn-success btn-sm rounded-3 px-3 py-2 fw-semibold fs-7 text-white shadow-sm">
                 <i class="fa-solid fa-hand-holding-dollar me-1"></i> Receive Payment
             </button>
+            @endif
+
+            @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['purchase', 'accountant']))
             <button class="btn btn-danger btn-sm rounded-3 px-3 py-2 fw-semibold fs-7 shadow-sm">
                 <i class="fa-solid fa-money-bill-transfer me-1"></i> Make Payment
             </button>
+            @endif
+
+            @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole('accountant'))
             <button class="btn btn-warning btn-sm rounded-3 px-3 py-2 fw-semibold fs-7 text-dark">
                 <i class="fa-solid fa-receipt me-1"></i> New Expense
             </button>
             <button class="btn btn-info btn-sm rounded-3 px-3 py-2 fw-semibold fs-7 text-white">
                 <i class="fa-solid fa-pen-to-square me-1"></i> Journal Entry
             </button>
+            @endif
+
+            @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['sales', 'accountant']))
             <button class="btn btn-light border btn-sm rounded-3 px-3 py-2 fw-semibold fs-7 text-secondary">
                 <i class="fa-solid fa-user-plus me-1"></i> Customer
             </button>
+            @endif
+
+            @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['purchase', 'accountant']))
             <button class="btn btn-light border btn-sm rounded-3 px-3 py-2 fw-semibold fs-7 text-secondary">
                 <i class="fa-solid fa-building-user me-1"></i> Supplier
             </button>
+            @endif
         </div>
     </div>
 </div>
@@ -85,7 +117,8 @@
 <!-- 6 Main Summary KPI Cards (Indian Currency ₹) -->
 <div class="row g-3 mb-4">
     <!-- 1. Total Sales -->
-    <div class="col-xl-2 col-lg-4 col-md-6">
+    @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['sales', 'accountant']) || auth()->user()->hasPermission('sales.view'))
+    <div class="col-xl-3 col-lg-4 col-md-6">
         <div class="kpi-card h-100 border-start border-4 border-primary">
             <div class="d-flex align-items-center justify-content-between mb-2">
                 <span class="kpi-title">TOTAL SALES</span>
@@ -100,9 +133,11 @@
             </div>
         </div>
     </div>
+    @endif
 
     <!-- 2. Total Purchase -->
-    <div class="col-xl-2 col-lg-4 col-md-6">
+    @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['purchase', 'accountant']) || auth()->user()->hasPermission('purchase.view'))
+    <div class="col-xl-3 col-lg-4 col-md-6">
         <div class="kpi-card h-100 border-start border-4 border-warning">
             <div class="d-flex align-items-center justify-content-between mb-2">
                 <span class="kpi-title">TOTAL PURCHASE</span>
@@ -117,9 +152,11 @@
             </div>
         </div>
     </div>
+    @endif
 
     <!-- 3. Total Receivable -->
-    <div class="col-xl-2 col-lg-4 col-md-6">
+    @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['sales', 'accountant']))
+    <div class="col-xl-3 col-lg-4 col-md-6">
         <div class="kpi-card h-100 border-start border-4 border-info">
             <div class="d-flex align-items-center justify-content-between mb-2">
                 <span class="kpi-title">TOTAL RECEIVABLE</span>
@@ -133,9 +170,11 @@
             </div>
         </div>
     </div>
+    @endif
 
     <!-- 4. Total Payable -->
-    <div class="col-xl-2 col-lg-4 col-md-6">
+    @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['purchase', 'accountant']))
+    <div class="col-xl-3 col-lg-4 col-md-6">
         <div class="kpi-card h-100 border-start border-4 border-danger">
             <div class="d-flex align-items-center justify-content-between mb-2">
                 <span class="kpi-title">TOTAL PAYABLE</span>
@@ -149,9 +188,11 @@
             </div>
         </div>
     </div>
+    @endif
 
     <!-- 5. Cash & Bank Balance -->
-    <div class="col-xl-2 col-lg-4 col-md-6">
+    @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole('accountant'))
+    <div class="col-xl-3 col-lg-4 col-md-6">
         <div class="kpi-card h-100 border-start border-4 border-secondary">
             <div class="d-flex align-items-center justify-content-between mb-2">
                 <span class="kpi-title">CASH & BANK BALANCE</span>
@@ -165,9 +206,11 @@
             </div>
         </div>
     </div>
+    @endif
 
     <!-- 6. Net Profit -->
-    <div class="col-xl-2 col-lg-4 col-md-6">
+    @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole('accountant'))
+    <div class="col-xl-3 col-lg-4 col-md-6">
         <div class="kpi-card h-100 border-start border-4 border-success">
             <div class="d-flex align-items-center justify-content-between mb-2">
                 <span class="kpi-title">NET PROFIT</span>
@@ -182,12 +225,13 @@
             </div>
         </div>
     </div>
+    @endif
 </div>
 
 <!-- CHARTS & SUMMARY ROW -->
 <div class="row g-3 mb-4">
     <!-- Sales vs Purchase Large Line/Bar Chart -->
-    <div class="col-xl-8 col-lg-12">
+    <div class="{{ (!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole('accountant')) ? 'col-xl-8' : 'col-xl-12' }} col-lg-12">
         <div class="erp-card h-100">
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-2 border-bottom">
                 <div>
@@ -207,6 +251,7 @@
     </div>
 
     <!-- Income vs Expense Donut Widget -->
+    @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole('accountant'))
     <div class="col-xl-4 col-lg-12">
         <div class="erp-card h-100">
             <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
@@ -234,9 +279,11 @@
             </div>
         </div>
     </div>
+    @endif
 </div>
 
 <!-- SECONDARY WIDGETS ROW (Payment Due & GST Summary) -->
+@if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole('accountant'))
 <div class="row g-3 mb-4">
     <!-- Payment Due Summary Widget -->
     <div class="col-xl-5 col-lg-12">
@@ -326,11 +373,13 @@
         </div>
     </div>
 </div>
+@endif
 
 <!-- AGING TABLES ROW (Receivable Aging & Payable Aging) -->
 <div class="row g-3 mb-4">
     <!-- Accounts Receivable Aging Table -->
-    <div class="col-xl-6 col-lg-12">
+    @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['sales', 'accountant']))
+    <div class="{{ (!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole('accountant')) ? 'col-xl-6' : 'col-xl-12' }} col-lg-12">
         <div class="erp-card h-100">
             <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
                 <h5 class="erp-card-title mb-0"><i class="fa-solid fa-hourglass-half me-2 text-info"></i> Accounts Receivable Aging</h5>
@@ -368,8 +417,10 @@
             </div>
         </div>
     </div>
+    @endif
 
     <!-- Accounts Payable Aging Table -->
+    @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['purchase', 'accountant']))
     <div class="col-xl-6 col-lg-12">
         <div class="erp-card h-100">
             <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
@@ -408,11 +459,13 @@
             </div>
         </div>
     </div>
+    @endif
 </div>
 
 <!-- EXPENSE & INVENTORY ROW -->
 <div class="row g-3 mb-4">
     <!-- Expense Breakdown Bar Chart -->
+    @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole('accountant'))
     <div class="col-xl-6 col-lg-12">
         <div class="erp-card h-100">
             <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
@@ -424,9 +477,10 @@
             </div>
         </div>
     </div>
+    @endif
 
     <!-- Inventory Low Stock Alerts Table -->
-    <div class="col-xl-6 col-lg-12">
+    <div class="{{ (!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole('accountant')) ? 'col-xl-6' : 'col-xl-12' }} col-lg-12">
         <div class="erp-card h-100">
             <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
                 <h5 class="erp-card-title mb-0"><i class="fa-solid fa-boxes-stacked me-2 text-warning"></i> Low Stock Alerts</h5>

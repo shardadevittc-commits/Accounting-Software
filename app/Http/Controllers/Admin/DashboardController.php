@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,9 +17,9 @@ class DashboardController extends Controller
         $authUser = Auth::user();
 
         $user = (object)[
-            'name' => $authUser ? $authUser->name : 'Super Admin',
-            'email' => $authUser ? $authUser->email : 'superadmin@gmail.com',
-            'role' => 'Super Admin',
+            'name' => $authUser ? $authUser->name : 'Admin',
+            'email' => $authUser ? $authUser->email : 'admin@gmail.com',
+            'role' => $authUser && $authUser->roles->first() ? $authUser->roles->first()->name : 'Admin',
             'company' => 'Tixx Accounting ERP Solutions Pvt Ltd',
             'financial_year' => 'FY 2025-26',
         ];
@@ -234,7 +236,14 @@ class DashboardController extends Controller
             ]
         ];
 
-        return view('dashboard', compact(
+        // Role-based transaction filtering for Sales role
+        if ($authUser && $authUser->hasRole('sales') && !$authUser->isAdmin()) {
+            $recentTransactions = array_values(array_filter($recentTransactions, function($t) {
+                return in_array($t['type'], ['Sale', 'Payment Received']);
+            }));
+        }
+
+        return view('admin.dashboard', compact(
             'user',
             'kpis',
             'paymentDueSummary',

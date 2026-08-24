@@ -1,51 +1,61 @@
 <!-- Top Horizontal Navigation Bar Header Partial (Spacious & Clean Layout) -->
 <header class="top-navbar">
     <!-- Brand Logo -->
-    <a href="{{ route('dashboard') }}" class="brand-logo me-4">
+    <a href="{{ route('dashboard') }}" class="brand-logo">
         <div class="brand-icon-gems">
             <div class="brand-gem bg-gem-1"></div>
             <div class="brand-gem bg-gem-2"></div>
             <div class="brand-gem bg-gem-3"></div>
             <div class="brand-gem bg-gem-4"></div>
         </div>
-        <span>Tixx <span class="fs-6 fw-normal text-muted ms-1">Accounts ERP</span></span>
+        <span>Accounting<span class="fs-6 fw-normal text-muted ms-1">Accounts ERP</span></span>
     </a>
 
     <!-- Top Horizontal Navigation Menu (Spacious 6 Core Categories with Submenu Indicators) -->
-    <nav class="flex-grow-1">
+    <nav class="topbar-center-nav">
         <ul class="nav-links-container">
             <!-- 1. HOME -->
-            <li class="nav-link-item active">
+            <li class="nav-link-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                 <a href="{{ route('dashboard') }}">
                     <i class="fa-solid fa-chart-line"></i>
                     <span>HOME</span>
                     <i class="fa-solid fa-chevron-down nav-chevron-icon"></i>
                 </a>
                 <div class="topbar-dropdown">
-                    <a href="{{ route('dashboard') }}"><i class="fa-solid fa-gauge-high"></i> Executive Overview</a>
+                    <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'text-white fw-bold' : '' }}"><i class="fa-solid fa-gauge-high"></i> Executive Overview</a>
                     <a href="#"><i class="fa-solid fa-chart-area"></i> Revenue Analytics</a>
-                    <a href="#"><i class="fa-solid fa-clock-rotate-left"></i> Audit Trail</a>
                 </div>
             </li>
 
             <!-- 2. TRANSACTIONS (Sales, Purchases, Expenses, Banking) -->
-            <li class="nav-link-item">
+            <li class="nav-link-item {{ request()->is('transactions*') ? 'active' : '' }}">
                 <a href="#">
                     <i class="fa-solid fa-money-bill-transfer"></i>
                     <span>TRANSACTIONS</span>
                     <i class="fa-solid fa-chevron-down nav-chevron-icon"></i>
                 </a>
                 <div class="topbar-dropdown">
-                    <a href="#"><i class="fa-solid fa-file-invoice-dollar text-success"></i> Sales Invoices & Orders</a>
-                    <a href="#"><i class="fa-solid fa-receipt text-warning"></i> Purchase Bills & Orders</a>
-                    <a href="#"><i class="fa-solid fa-wallet text-danger"></i> Expense Claims</a>
-                    <a href="#"><i class="fa-solid fa-hand-holding-dollar text-primary"></i> Customer Payments</a>
-                    <a href="#"><i class="fa-solid fa-building-columns text-info"></i> Bank Transactions</a>
+                    @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['sales', 'accountant']) || auth()->user()->hasPermission('sales.view'))
+                        <a href="#"><i class="fa-solid fa-file-invoice-dollar text-success"></i> Sales Invoices & Orders</a>
+                    @endif
+                    @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['purchase', 'accountant']) || auth()->user()->hasPermission('purchase.view'))
+                        <a href="#"><i class="fa-solid fa-receipt text-warning"></i> Purchase Bills & Orders</a>
+                    @endif
+                    @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole('accountant') || auth()->user()->hasPermission('expenses.view'))
+                        <a href="#"><i class="fa-solid fa-wallet text-danger"></i> Expense Claims</a>
+                    @endif
+                    @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['sales', 'accountant']) || auth()->user()->hasPermission('payments.view'))
+                        <a href="#"><i class="fa-solid fa-hand-holding-dollar text-primary"></i> Customer Payments</a>
+                    @endif
+                    @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole('accountant'))
+                        <a href="#"><i class="fa-solid fa-building-columns text-info"></i> Bank Transactions</a>
+                    @endif
                 </div>
             </li>
 
             <!-- 3. ACCOUNTING (Ledger, Journal, Cash/Bank Book) -->
-            <li class="nav-link-item">
+            @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole('accountant'))
+            <li class="nav-link-item {{ request()->is('accounting*') ? 'active' : '' }}">
                 <a href="#">
                     <i class="fa-solid fa-book-journal-whills"></i>
                     <span>ACCOUNTING</span>
@@ -60,9 +70,10 @@
                     <a href="#"><i class="fa-solid fa-scale-balanced"></i> Trial Balance</a>
                 </div>
             </li>
+            @endif
 
             <!-- 4. INVENTORY (Products, Warehouses, Stock) -->
-            <li class="nav-link-item">
+            <li class="nav-link-item {{ request()->is('inventory*') ? 'active' : '' }}">
                 <a href="#">
                     <i class="fa-solid fa-boxes-stacked"></i>
                     <span>INVENTORY</span>
@@ -70,48 +81,63 @@
                 </a>
                 <div class="topbar-dropdown">
                     <a href="#"><i class="fa-solid fa-box"></i> Products & Items</a>
-                    <a href="#"><i class="fa-solid fa-warehouse"></i> Warehouses</a>
-                    <a href="#"><i class="fa-solid fa-cubes"></i> Stock Summary</a>
-                    <a href="#"><i class="fa-solid fa-sliders"></i> Stock Adjustment</a>
-                    <a href="#"><i class="fa-solid fa-right-left"></i> Stock Transfer</a>
+                    @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole('accountant') || auth()->user()->hasRole('purchase'))
+                        <a href="#"><i class="fa-solid fa-warehouse"></i> Warehouses</a>
+                        <a href="#"><i class="fa-solid fa-cubes"></i> Stock Summary</a>
+                        <a href="#"><i class="fa-solid fa-sliders"></i> Stock Adjustment</a>
+                        <a href="#"><i class="fa-solid fa-right-left"></i> Stock Transfer</a>
+                    @endif
                 </div>
             </li>
 
             <!-- 5. TAX & REPORTS (GST, P&L, Balance Sheet) -->
-            <li class="nav-link-item">
+            <li class="nav-link-item {{ request()->is('reports*') ? 'active' : '' }}">
                 <a href="#">
                     <i class="fa-solid fa-percent"></i>
                     <span>TAX & REPORTS</span>
                     <i class="fa-solid fa-chevron-down nav-chevron-icon"></i>
                 </a>
                 <div class="topbar-dropdown">
-                    <a href="#"><i class="fa-solid fa-file-pdf text-purple"></i> GST Summary & Return (GSTR-3B)</a>
-                    <a href="#"><i class="fa-solid fa-file-contract text-success"></i> Profit & Loss Statement</a>
-                    <a href="#"><i class="fa-solid fa-scale-balanced text-primary"></i> Balance Sheet</a>
-                    <a href="#"><i class="fa-solid fa-arrows-split-up-and-left text-info"></i> Cash Flow Statement</a>
+                    @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole('accountant'))
+                        <a href="#"><i class="fa-solid fa-file-pdf text-purple"></i> GST Summary & Return (GSTR-3B)</a>
+                        <a href="#"><i class="fa-solid fa-file-contract text-success"></i> Profit & Loss Statement</a>
+                        <a href="#"><i class="fa-solid fa-scale-balanced text-primary"></i> Balance Sheet</a>
+                        <a href="#"><i class="fa-solid fa-arrows-split-up-and-left text-info"></i> Cash Flow Statement</a>
+                    @endif
                     <a href="#"><i class="fa-solid fa-chart-line text-warning"></i> Sales & Purchase Reports</a>
                 </div>
             </li>
 
             <!-- 6. SETTINGS -->
-            <li class="nav-link-item">
-                <a href="#">
+            @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasPermission('users.view') || auth()->user()->hasPermission('roles.view'))
+            <li class="nav-link-item {{ (request()->routeIs('roles.*') || request()->routeIs('users.*') || request()->is('settings*')) ? 'active' : '' }}">
+                <a href="{{ route('roles.index') }}">
                     <i class="fa-solid fa-gear"></i>
                     <span>SETTINGS</span>
                     <i class="fa-solid fa-chevron-down nav-chevron-icon"></i>
                 </a>
                 <div class="topbar-dropdown">
+                    @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasPermission('roles.view'))
+                        <a href="{{ route('roles.index') }}" class="{{ request()->routeIs('roles.*') ? 'text-white fw-bold' : '' }}"><i class="fa-solid fa-user-shield text-warning"></i> Roles & Permissions</a>
+                    @endif
+                    @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasPermission('users.view'))
+                        <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.*') ? 'text-white fw-bold' : '' }}"><i class="fa-solid fa-users-gear text-info"></i> User Accounts & Permissions</a>
+                    @endif
                     <a href="#"><i class="fa-solid fa-building-gear"></i> Company Settings</a>
                     <a href="#"><i class="fa-solid fa-calendar-days"></i> Financial Year Config</a>
-                    <a href="#"><i class="fa-solid fa-user-shield"></i> Users & Roles</a>
-                    <a href="#"><i class="fa-solid fa-key"></i> API Keys</a>
                 </div>
             </li>
+            @endif
         </ul>
     </nav>
 
     <!-- Top Right Tools (Notification, User Profile & Direct Logout) -->
-    <div class="topbar-right-tools ms-4">
+    <div class="topbar-right-tools">
+        <!-- Theme Palette Switcher Button -->
+        <button type="button" class="tool-icon-btn" data-bs-toggle="modal" data-bs-target="#themeSelectorModal" title="Change ERP Theme Color">
+            <i class="fa-solid fa-palette text-warning"></i>
+        </button>
+
         <!-- Notification Icon -->
         <a href="#" class="tool-icon-btn" title="Notifications">
             <i class="fa-regular fa-bell"></i>
@@ -132,12 +158,14 @@
             </div>
             <ul class="dropdown-menu dropdown-menu-end shadow-lg user-profile-dropdown-menu">
                 <li class="px-3 py-2 border-bottom border-secondary border-opacity-25 mb-1">
-                    <div class="fw-bold text-white text-capitalize fs-6 mb-0">{{ $user->name ?? (auth()->check() ? auth()->user()->name : 'Super Admin') }}</div>
-                    <div class="text-white-50 fs-8 text-break mb-1">{{ $user->email ?? (auth()->check() ? auth()->user()->email : 'superadmin@gmail.com') }}</div>
-                    <span class="badge bg-primary-subtle text-primary rounded-pill px-2 fs-8">Super Admin</span>
+                    <div class="fw-bold text-white text-capitalize fs-6 mb-0">{{ $user->name ?? (auth()->check() ? auth()->user()->name : 'Admin') }}</div>
+                    <div class="text-white-50 fs-8 text-break mb-1">{{ $user->email ?? (auth()->check() ? auth()->user()->email : 'admin@gmail.com') }}</div>
+                    <span class="badge bg-primary-subtle text-primary rounded-pill px-2 fs-8">{{ auth()->check() && auth()->user()->roles->first() ? auth()->user()->roles->first()->name : 'Admin' }}</span>
                 </li>
                 <li><a class="dropdown-item py-2 rounded-2 text-white-50" href="{{ route('profile.index') }}"><i class="fa-solid fa-user me-2 text-primary"></i> My Profile</a></li>
-                <li><a class="dropdown-item py-2 rounded-2 text-white-50" href="#"><i class="fa-solid fa-shield-halved me-2 text-warning"></i> Admin Settings</a></li>
+                @if(!auth()->check() || auth()->user()->isAdmin())
+                <li><a class="dropdown-item py-2 rounded-2 text-white-50" href="{{ route('roles.index') }}"><i class="fa-solid fa-shield-halved me-2 text-warning"></i> Roles & Permissions</a></li>
+                @endif
                 <li><hr class="dropdown-divider border-secondary border-opacity-25 my-1"></li>
                 <li>
                     <form action="{{ route('logout') }}" method="POST" class="d-inline">

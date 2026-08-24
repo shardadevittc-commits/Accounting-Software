@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Super Admin Login - Tixx Accounting</title>
+    <title>Login | Accounts ERP</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -31,14 +31,13 @@
                         <div class="brand-gem bg-gem-3"></div>
                         <div class="brand-gem bg-gem-4"></div>
                     </div>
-                    <span>Tixx</span>
+                    <!-- <span>Tixx</span> -->
                 </a>
-                <h4 class="fw-bold text-white mb-1">Super Admin Login</h4>
-                <p class="login-subtitle">Sign in to manage your accounting dashboard</p>
+                <h4 class="fw-bold text-white mb-1">Login to Your Account</h4>
+                <p class="login-subtitle">Sign in to continue to your dashboard</p>
             </div>
-
             <!-- Session Notifications / Validation Errors -->
-            @include('layouts.partials.alerts')
+            @include('admin.layouts.partials.alerts')
 
             <!-- Login Form -->
             <form action="{{ route('login') }}" method="POST" class="login-form">
@@ -53,11 +52,10 @@
                             name="email" 
                             id="email" 
                             class="form-control custom-dark-input @error('email') is-invalid @enderror" 
-                            placeholder="superadmin@gmail.com" 
-                            value="{{ old('email', 'superadmin@gmail.com') }}" 
+                            placeholder="admin@gmail.com" 
+                            value="{{ old('email', 'admin@gmail.com') }}" 
                             required 
-                            autofocus
-                        >
+                            autofocus>
                         <i class="fa-regular fa-envelope"></i>
                     </div>
                 </div>
@@ -66,7 +64,7 @@
                 <div class="mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-1">
                         <label for="password" class="form-label mb-0">Password</label>
-                        <a href="#" class="text-white-50 fs-8 text-decoration-none">Forgot?</a>
+                        <!-- <a href="#" class="text-white-50 fs-8 text-decoration-none">Forgot?</a> -->
                     </div>
                     <div class="custom-input-group">
                         <input 
@@ -79,6 +77,9 @@
                             required
                         >
                         <i class="fa-solid fa-lock"></i>
+                        <button type="button" class="toggle-password-btn" id="togglePasswordBtn" title="Toggle password visibility" tabindex="-1">
+                            <i class="fa-solid fa-eye" id="togglePasswordIcon"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -88,7 +89,6 @@
                         <input type="checkbox" name="remember" id="remember" class="form-check-input custom-dark-check" checked>
                         <label for="remember" class="form-check-label custom-checkbox-label">Keep me logged in</label>
                     </div>
-                    <span class="badge bg-primary-subtle text-primary rounded-pill px-2 fs-8 fw-semibold">Super Admin</span>
                 </div>
 
                 <!-- Submit Button -->
@@ -101,5 +101,31 @@
 
     <!-- Bootstrap 5 JS Bundle CDN -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Password Visibility Toggle Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+            const passwordInput = document.getElementById('password');
+            const togglePasswordIcon = document.getElementById('togglePasswordIcon');
+
+            if (togglePasswordBtn && passwordInput && togglePasswordIcon) {
+                togglePasswordBtn.addEventListener('click', function () {
+                    const isPassword = passwordInput.getAttribute('type') === 'password';
+                    passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+                    
+                    if (isPassword) {
+                        togglePasswordIcon.classList.remove('fa-eye');
+                        togglePasswordIcon.classList.add('fa-eye-slash');
+                        togglePasswordBtn.style.color = '#818cf8';
+                    } else {
+                        togglePasswordIcon.classList.remove('fa-eye-slash');
+                        togglePasswordIcon.classList.add('fa-eye');
+                        togglePasswordBtn.style.color = '';
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>

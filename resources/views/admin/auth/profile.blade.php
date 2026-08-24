@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('admin.layouts.app')
 
 @section('title', 'Profile & Preferences - Tixx Accounts ERP')
 
@@ -11,7 +11,7 @@
     </div>
 
     <!-- Reusable Alert Notifications & Error Messages -->
-    @include('layouts.partials.alerts')
+    @include('admin.layouts.partials.alerts')
 
     <!-- SIDE-BY-SIDE 2-COLUMN GRID ROW -->
     <div class="row g-4">
