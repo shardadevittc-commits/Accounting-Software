@@ -1,0 +1,189 @@
+/* ==========================================================================
+   Sales Orders & Sales Dashboard - Master External Stylesheet
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Select2 Dropdown Styling (Bootstrap 5 Theme Overrides)
+   -------------------------------------------------------------------------- */
+.select2-container--bootstrap-5 .select2-selection {
+    min-height: 44px !important;
+    border-radius: 10px !important;
+    border: 1px solid var(--border-color, #cbd5e1) !important;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: flex !important;
+    align-items: center !important;
+    padding-left: 0.5rem;
+    background-color: var(--card-bg, #ffffff) !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+    color: var(--text-primary, #1e293b) !important;
+    font-weight: 600;
+}
+
+.select2-container--bootstrap-5 .select2-dropdown {
+    border-radius: 12px !important;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15) !important;
+    border: 1px solid #cbd5e1 !important;
+    overflow: hidden;
+    z-index: 1056;
+}
+
+.select2-container--bootstrap-5 .select2-search .select2-search__field {
+    border-radius: 8px !important;
+    padding: 8px 12px !important;
+    font-size: 0.85rem !important;
+}
+
+.select2-container--bootstrap-5 .select2-results__option--highlighted {
+    background-color: var(--primary, #2563eb) !important;
+}
+
+/* --------------------------------------------------------------------------
+   2. Customer Filter & Info Banner Cards
+   -------------------------------------------------------------------------- */
+.sales-filter-card {
+    background: var(--card-bg, #ffffff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 14px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    padding: 1.25rem;
+}
+
+.customer-info-banner {
+    background: linear-gradient(135deg, rgba(var(--primary-rgb, 37, 99, 235), 0.08), rgba(var(--primary-rgb, 37, 99, 235), 0.03));
+    border: 1px solid var(--theme-primary-alpha, rgba(37, 99, 235, 0.2));
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+}
+
+/* --------------------------------------------------------------------------
+   3. KPI Summary Metric Cards (List & Details Pages)
+   -------------------------------------------------------------------------- */
+.kpi-stat-card,
+.kpi-detail-card {
+    background: var(--card-bg, #ffffff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 14px;
+    padding: 1.25rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi-stat-card:hover,
+.kpi-detail-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.kpi-icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+/* --------------------------------------------------------------------------
+   4. Order Header & Summary Card (Sale Order Details Page)
+   -------------------------------------------------------------------------- */
+.order-header-card {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
+}
+
+.order-summary-grid {
+    background: rgba(255, 255, 255, 0.05);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1.25rem 1.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   5. Sales Data Tables & Line Items Breakdown Cards
+   -------------------------------------------------------------------------- */
+.custom-sales-table,
+.items-table-card {
+    background: var(--card-bg, #ffffff);
+    border-radius: 14px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    overflow: hidden;
+}
+
+.custom-sales-table th,
+.items-table-card th {
+    background: rgba(0, 0, 0, 0.02);
+    color: var(--text-muted, #64748b);
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+.custom-sales-table td,
+.items-table-card td {
+    padding: 1rem 1.25rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border-color, rgba(226, 232, 240, 0.6));
+    color: var(--text-primary, #1e293b);
+    font-size: 0.875rem;
+}
+
+.custom-sales-table tbody tr:hover {
+    background-color: rgba(var(--primary-rgb, 37, 99, 235), 0.03);
+    cursor: pointer;
+}
+
+.so-badge {
+    font-family: monospace;
+    font-weight: 700;
+    padding: 0.35rem 0.65rem;
+    border-radius: 8px;
+    font-size: 0.825rem;
+}
+
+/* --------------------------------------------------------------------------
+   6. Modal Invoice View & Line Items Table
+   -------------------------------------------------------------------------- */
+.modal-invoice-header {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: #ffffff;
+    padding: 1.5rem;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+}
+
+.modal-invoice-summary {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1rem;
+}
+
+.table-line-items th {
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+/* --------------------------------------------------------------------------
+   7. Print Media Rules
+   -------------------------------------------------------------------------- */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    .order-header-card {
+        background: #1e293b !important;
+        color: #ffffff !important;
+        -webkit-print-color-adjust: exact;
+    }
+}

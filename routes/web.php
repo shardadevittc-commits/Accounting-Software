@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserRoleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ThemeController;
+use App\Http\Controllers\Sales\SalesOrderController;
 
 // Public Storage File Route (Serves avatars & uploaded files reliably across Artisan Serve & Windows WAMP)
 Route::get('/storage/{path}', function ($path) {
@@ -27,6 +28,15 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
+    // Customer Sale Orders Routes
+    Route::get('/sale-order-list', [SalesOrderController::class, 'index'])->name('sales.orders');
+    Route::get('/sale-order-details/{slid}', [SalesOrderController::class, 'showDetails'])->name('sales.order.details');
+    Route::get('/sales/customers', [SalesOrderController::class, 'getCustomers'])->name('sales.customers');
+    Route::get('/sales/orders', [SalesOrderController::class, 'getOrders'])->name('sales.orders.data');
+    Route::get('/sales/order-details', [SalesOrderController::class, 'getOrderDetails'])->name('sales.order-details.data');
+    Route::get('/sales/dispatches', [SalesOrderController::class, 'getDispatches'])->name('sales.dispatches');
+    Route::get('/sales/summary', [SalesOrderController::class, 'getSummary'])->name('sales.summary');
+
     // Profile & Preferences Routes
     Route::post('/theme/update', [ThemeController::class, 'updateTheme'])->name('theme.update');
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');

@@ -67,9 +67,9 @@
         </div>
         <div class="quick-actions-buttons d-flex align-items-center flex-wrap gap-2">
             @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['sales', 'accountant']) || auth()->user()->hasPermission('sales.create'))
-            <button class="btn btn-primary btn-sm rounded-3 px-3 py-2 fw-semibold fs-7 shadow-sm">
-                <i class="fa-solid fa-plus me-1"></i> New Sale
-            </button>
+            <a href="{{ route('sales.orders') }}" class="btn btn-primary btn-sm rounded-3 px-3 py-2 fw-semibold fs-7 shadow-sm text-decoration-none">
+                <i class="fa-solid fa-file-invoice-dollar me-1"></i> Sales Orders
+            </a>
             @endif
 
             @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['purchase', 'accountant']) || auth()->user()->hasPermission('purchase.create'))

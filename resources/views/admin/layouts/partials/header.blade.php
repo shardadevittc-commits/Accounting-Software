@@ -28,15 +28,15 @@
             </li>
 
             <!-- 2. TRANSACTIONS (Sales, Purchases, Expenses, Banking) -->
-            <li class="nav-link-item {{ request()->is('transactions*') ? 'active' : '' }}">
-                <a href="#">
+            <li class="nav-link-item {{ request()->is('transactions*') || request()->routeIs('sales.*') ? 'active' : '' }}">
+                <a href="{{ route('sales.orders') }}">
                     <i class="fa-solid fa-money-bill-transfer"></i>
                     <span>TRANSACTIONS</span>
                     <i class="fa-solid fa-chevron-down nav-chevron-icon"></i>
                 </a>
                 <div class="topbar-dropdown">
                     @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['sales', 'accountant']) || auth()->user()->hasPermission('sales.view'))
-                        <a href="#"><i class="fa-solid fa-file-invoice-dollar text-success"></i> Sales Invoices & Orders</a>
+                        <a href="{{ route('sales.orders') }}" class="{{ request()->routeIs('sales.*') ? 'text-white fw-bold' : '' }}"><i class="fa-solid fa-file-invoice-dollar text-success"></i> Sales Invoices & Orders</a>
                     @endif
                     @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['purchase', 'accountant']) || auth()->user()->hasPermission('purchase.view'))
                         <a href="#"><i class="fa-solid fa-receipt text-warning"></i> Purchase Bills & Orders</a>
