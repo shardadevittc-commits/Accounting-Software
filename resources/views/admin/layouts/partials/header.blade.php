@@ -16,7 +16,7 @@
         <ul class="nav-links-container">
             <!-- 1. HOME -->
             <li class="nav-link-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                <a href="{{ route('dashboard') }}">
+                <a href="javascript:void(0)">
                     <i class="fa-solid fa-chart-line"></i>
                     <span>HOME</span>
                     <i class="fa-solid fa-chevron-down nav-chevron-icon"></i>
@@ -28,8 +28,8 @@
             </li>
 
             <!-- 2. TRANSACTIONS (Sales, Purchases, Expenses, Banking) -->
-            <li class="nav-link-item {{ request()->is('transactions*') || request()->routeIs('sales.*') ? 'active' : '' }}">
-                <a href="{{ route('sales.orders') }}">
+            <li class="nav-link-item {{ request()->is('transactions*') || request()->routeIs('sales.*') || request()->routeIs('purchase.*') ? 'active' : '' }}">
+                <a href="javascript:void(0)">
                     <i class="fa-solid fa-money-bill-transfer"></i>
                     <span>TRANSACTIONS</span>
                     <i class="fa-solid fa-chevron-down nav-chevron-icon"></i>
@@ -39,7 +39,7 @@
                         <a href="{{ route('sales.orders') }}" class="{{ request()->routeIs('sales.*') ? 'text-white fw-bold' : '' }}"><i class="fa-solid fa-file-invoice-dollar text-success"></i> Sales Invoices & Orders</a>
                     @endif
                     @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['purchase', 'accountant']) || auth()->user()->hasPermission('purchase.view'))
-                        <a href="#"><i class="fa-solid fa-receipt text-warning"></i> Purchase Bills & Orders</a>
+                        <a href="{{ route('purchase.orders') }}" class="{{ request()->routeIs('purchase.*') ? 'text-white fw-bold' : '' }}"><i class="fa-solid fa-receipt text-warning"></i> Purchase Bills & Orders</a>
                     @endif
                     @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole('accountant') || auth()->user()->hasPermission('expenses.view'))
                         <a href="#"><i class="fa-solid fa-wallet text-danger"></i> Expense Claims</a>
@@ -56,7 +56,7 @@
             <!-- 3. ACCOUNTING (Ledger, Journal, Cash/Bank Book) -->
             @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole('accountant'))
             <li class="nav-link-item {{ request()->is('accounting*') ? 'active' : '' }}">
-                <a href="#">
+                <a href="javascript:void(0)">
                     <i class="fa-solid fa-book-journal-whills"></i>
                     <span>ACCOUNTING</span>
                     <i class="fa-solid fa-chevron-down nav-chevron-icon"></i>
@@ -74,7 +74,7 @@
 
             <!-- 4. INVENTORY (Products, Warehouses, Stock) -->
             <li class="nav-link-item {{ request()->is('inventory*') ? 'active' : '' }}">
-                <a href="#">
+                <a href="javascript:void(0)">
                     <i class="fa-solid fa-boxes-stacked"></i>
                     <span>INVENTORY</span>
                     <i class="fa-solid fa-chevron-down nav-chevron-icon"></i>
@@ -92,7 +92,7 @@
 
             <!-- 5. TAX & REPORTS (GST, P&L, Balance Sheet) -->
             <li class="nav-link-item {{ request()->is('reports*') ? 'active' : '' }}">
-                <a href="#">
+                <a href="javascript:void(0)">
                     <i class="fa-solid fa-percent"></i>
                     <span>TAX & REPORTS</span>
                     <i class="fa-solid fa-chevron-down nav-chevron-icon"></i>
@@ -111,7 +111,7 @@
             <!-- 6. SETTINGS -->
             @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasPermission('users.view') || auth()->user()->hasPermission('roles.view'))
             <li class="nav-link-item {{ (request()->routeIs('roles.*') || request()->routeIs('users.*') || request()->is('settings*')) ? 'active' : '' }}">
-                <a href="{{ route('roles.index') }}">
+                <a href="javascript:void(0)">
                     <i class="fa-solid fa-gear"></i>
                     <span>SETTINGS</span>
                     <i class="fa-solid fa-chevron-down nav-chevron-icon"></i>

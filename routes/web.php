@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\UserRoleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ThemeController;
 use App\Http\Controllers\Sales\SalesOrderController;
+use App\Http\Controllers\Purchase\PurchaseOrderController;
 
 // Public Storage File Route (Serves avatars & uploaded files reliably across Artisan Serve & Windows WAMP)
 Route::get('/storage/{path}', function ($path) {
@@ -36,6 +37,15 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/sales/order-details', [SalesOrderController::class, 'getOrderDetails'])->name('sales.order-details.data');
     Route::get('/sales/dispatches', [SalesOrderController::class, 'getDispatches'])->name('sales.dispatches');
     Route::get('/sales/summary', [SalesOrderController::class, 'getSummary'])->name('sales.summary');
+
+    // Customer Purchase Orders Routes
+    Route::get('/purchase-order-list', [PurchaseOrderController::class, 'index'])->name('purchase.orders');
+    Route::get('/purchase-order-details/{poid}', [PurchaseOrderController::class, 'showDetails'])->name('purchase.order.details');
+    Route::get('/purchase/customers', [PurchaseOrderController::class, 'getCustomers'])->name('purchase.customers');
+    Route::get('/purchase/orders', [PurchaseOrderController::class, 'getOrders'])->name('purchase.orders.data');
+    Route::get('/purchase/order-details', [PurchaseOrderController::class, 'getOrderDetails'])->name('purchase.order-details.data');
+    Route::get('/purchase/received-material', [PurchaseOrderController::class, 'getReceivedMaterial'])->name('purchase.received-material');
+    Route::get('/purchase/summary', [PurchaseOrderController::class, 'getSummary'])->name('purchase.summary');
 
     // Profile & Preferences Routes
     Route::post('/theme/update', [ThemeController::class, 'updateTheme'])->name('theme.update');

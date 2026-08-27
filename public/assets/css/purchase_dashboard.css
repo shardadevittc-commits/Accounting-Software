@@ -1,0 +1,193 @@
+/* ==========================================================================
+   Purchase Orders & Purchase Dashboard - Master External Stylesheet
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Select2 Dropdown Styling (Bootstrap 5 Theme Overrides)
+   -------------------------------------------------------------------------- */
+.select2-container--bootstrap-5 .select2-selection {
+    min-height: 44px !important;
+    border-radius: 10px !important;
+    border: 1px solid var(--border-color, #cbd5e1) !important;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: flex !important;
+    align-items: center !important;
+    padding-left: 0.5rem;
+    background-color: var(--card-bg, #ffffff) !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+    color: var(--text-primary, #1e293b) !important;
+    font-weight: 600;
+}
+
+.select2-container--bootstrap-5 .select2-dropdown {
+    border-radius: 12px !important;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15) !important;
+    border: 1px solid #cbd5e1 !important;
+    overflow: hidden;
+    z-index: 1056;
+}
+
+.select2-container--bootstrap-5 .select2-search .select2-search__field {
+    border-radius: 8px !important;
+    padding: 8px 12px !important;
+    font-size: 0.85rem !important;
+}
+
+.select2-container--bootstrap-5 .select2-results__option--highlighted {
+    background-color: var(--primary, #d97706) !important;
+}
+
+/* --------------------------------------------------------------------------
+   2. Customer Filter & Info Banner Cards
+   -------------------------------------------------------------------------- */
+.purchase-filter-card {
+    background: var(--card-bg, #ffffff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 14px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    padding: 1.25rem;
+}
+
+.customer-info-banner-purchase {
+    background: linear-gradient(135deg, rgba(217, 119, 6, 0.08), rgba(217, 119, 6, 0.03));
+    border: 1px solid rgba(217, 119, 6, 0.2);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+}
+
+/* --------------------------------------------------------------------------
+   3. KPI Summary Metric Cards (List & Details Pages)
+   -------------------------------------------------------------------------- */
+.kpi-stat-card,
+.kpi-detail-card {
+    background: var(--card-bg, #ffffff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 14px;
+    padding: 1.25rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi-stat-card:hover,
+.kpi-detail-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.kpi-icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+/* --------------------------------------------------------------------------
+   4. Order Header & Summary Card (Purchase Order Details Page)
+   -------------------------------------------------------------------------- */
+.po-header-card {
+    background: linear-gradient(135deg, #1e1b4b, #311b92);
+    color: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+}
+
+.po-summary-grid {
+    background: rgba(255, 255, 255, 0.06);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 1.25rem 1.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   5. Purchase Data Tables & Line Items Breakdown Cards
+   -------------------------------------------------------------------------- */
+.custom-purchase-table,
+.items-table-card {
+    background: var(--card-bg, #ffffff);
+    border-radius: 14px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    overflow: hidden;
+}
+
+.custom-purchase-table th,
+.items-table-card th {
+    background: rgba(0, 0, 0, 0.02);
+    color: var(--text-muted, #64748b);
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+.custom-purchase-table td,
+.items-table-card td {
+    padding: 1rem 1.25rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border-color, rgba(226, 232, 240, 0.6));
+    color: var(--text-primary, #1e293b);
+    font-size: 0.875rem;
+}
+
+.custom-purchase-table tbody tr:hover {
+    background-color: rgba(217, 119, 6, 0.04);
+    cursor: pointer;
+}
+
+.po-badge {
+    font-family: monospace;
+    font-weight: 700;
+    padding: 0.35rem 0.65rem;
+    border-radius: 8px;
+    font-size: 0.825rem;
+}
+
+/* --------------------------------------------------------------------------
+   6. Search Input & Filter Badges
+   -------------------------------------------------------------------------- */
+.top-search-input {
+    width: 100%;
+    padding: 0.45rem 0.75rem 0.45rem 2.25rem;
+    font-size: 0.85rem;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.top-search-input:focus {
+    border-color: #d97706;
+}
+
+.search-box-wrapper {
+    position: relative;
+}
+
+.search-box-wrapper i {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+/* --------------------------------------------------------------------------
+   7. Print Media Rules
+   -------------------------------------------------------------------------- */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    .po-header-card {
+        background: #1e1b4b !important;
+        color: #ffffff !important;
+        -webkit-print-color-adjust: exact;
+    }
+}
