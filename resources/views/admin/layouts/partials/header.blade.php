@@ -36,7 +36,8 @@
                 </a>
                 <div class="topbar-dropdown">
                     @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['sales', 'accountant']) || auth()->user()->hasPermission('sales.view'))
-                        <a href="{{ route('sales.orders') }}" class="{{ request()->routeIs('sales.*') ? 'text-white fw-bold' : '' }}"><i class="fa-solid fa-file-invoice-dollar text-success"></i> Sales Invoices & Orders</a>
+                        <a href="{{ route('sales.dispatch-invoicing') }}" class="{{ request()->routeIs('sales.dispatch-invoicing') ? 'text-white fw-bold' : '' }}"><i class="fa-solid fa-truck-ramp-box text-info"></i> Dispatch Invoicing</a>
+                        <a href="{{ route('sales.orders') }}" class="{{ request()->routeIs('sales.orders') ? 'text-white fw-bold' : '' }}"><i class="fa-solid fa-file-invoice-dollar text-success"></i> Sales Orders List</a>
                     @endif
                     @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['purchase', 'accountant']) || auth()->user()->hasPermission('purchase.view'))
                         <a href="{{ route('purchase.orders') }}" class="{{ request()->routeIs('purchase.*') ? 'text-white fw-bold' : '' }}"><i class="fa-solid fa-receipt text-warning"></i> Purchase Bills & Orders</a>

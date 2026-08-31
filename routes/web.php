@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ThemeController;
 use App\Http\Controllers\Sales\SalesOrderController;
 use App\Http\Controllers\Purchase\PurchaseOrderController;
+use App\Http\Controllers\Accounting\InvoiceController;
 
 // Public Storage File Route (Serves avatars & uploaded files reliably across Artisan Serve & Windows WAMP)
 Route::get('/storage/{path}', function ($path) {
@@ -37,6 +38,16 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/sales/order-details', [SalesOrderController::class, 'getOrderDetails'])->name('sales.order-details.data');
     Route::get('/sales/dispatches', [SalesOrderController::class, 'getDispatches'])->name('sales.dispatches');
     Route::get('/sales/summary', [SalesOrderController::class, 'getSummary'])->name('sales.summary');
+
+    // Dispatch Sales Invoicing Routes
+    Route::get('/dispatch-invoicing', [InvoiceController::class, 'index'])->name('sales.dispatch-invoicing');
+    Route::get('/invoices/pending-vehicles', [InvoiceController::class, 'getPendingVehicles'])->name('invoices.pending-vehicles');
+    Route::get('/invoices/dispatch-details', [InvoiceController::class, 'getDispatchDetails'])->name('invoices.dispatch-details');
+    Route::get('/invoices/sale-order-dispatches', [InvoiceController::class, 'getSaleOrderDispatches'])->name('invoices.sale-order-dispatches');
+    Route::post('/invoices/store', [InvoiceController::class, 'store'])->name('invoices.store');
+    Route::get('/invoices/print/{id}', [InvoiceController::class, 'printInvoice'])->name('invoices.print');
+    Route::post('/invoices/generate', [InvoiceController::class, 'invoiceGenerate'])->name('invoices.generate');
+
 
     // Customer Purchase Orders Routes
     Route::get('/purchase-order-list', [PurchaseOrderController::class, 'index'])->name('purchase.orders');
