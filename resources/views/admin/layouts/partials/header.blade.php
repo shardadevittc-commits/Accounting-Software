@@ -182,7 +182,7 @@
         <!-- Direct Logout Power Button -->
         <form action="{{ route('logout') }}" method="POST" class="d-inline ms-1">
             @csrf
-            <button type="submit" class="tool-icon-btn text-danger bg-danger-subtle border-danger border-opacity-25 btn-direct-logout" title="Logout Now">
+            <button type="submit" class="tool-icon-btn btn-direct-logout" title="Logout Now">
                 <i class="fa-solid fa-power-off"></i>
             </button>
         </form>

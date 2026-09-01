@@ -3,125 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estimate / Invoice - {{ $invoice->invoice_no }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Estimate - {{ $invoice->invoice_no ?: $invoice->id }}</title>
     <style>
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
+
         body {
-            background-color: #f8fafc;
+            background-color: #525659;
             color: #000000;
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 12px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
+            font-size: 11px;
             padding: 20px;
             margin: 0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
 
-        .invoice-box {
+        .print-controls {
+            max-width: 780px;
+            margin: 0 auto 15px auto;
+            text-align: center;
+        }
+        .btn {
+            display: inline-block;
+            font-weight: 700;
+            font-size: 12px;
+            padding: 7px 18px;
+            border-radius: 4px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            margin: 0 4px;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background-color: #2563eb;
+            color: #ffffff;
+        }
+        .btn-secondary {
+            background-color: #64748b;
+            color: #ffffff;
+        }
+
+        /* Invoice Container */
+        .invoice-sheet {
             background: #ffffff;
             border: 2px solid #000000;
-            max-width: 820px;
+            width: 100%;
+            max-width: 780px;
             margin: 0 auto;
-            padding: 15px 18px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
 
-        /* Header styling */
-        .header-title {
+        /* Header */
+        .inv-header {
             text-align: center;
-            font-size: 14px;
-            font-weight: bold;
-            letter-spacing: 1px;
+            padding: 10px 15px 8px 15px;
+            border-bottom: 1.5px solid #000000;
+        }
+        .inv-header .doc-title {
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 2.5px;
             margin-bottom: 2px;
             text-transform: uppercase;
         }
-        .company-name {
-            text-align: center;
-            font-size: 20px;
+        .inv-header .company-title {
+            font-size: 18px;
             font-weight: 900;
             letter-spacing: 0.5px;
             margin-bottom: 3px;
             text-transform: uppercase;
         }
-        .company-gst {
-            text-align: center;
-            font-size: 12px;
-            font-weight: bold;
-            margin-bottom: 12px;
-            text-transform: uppercase;
+        .inv-header .company-gstin {
+            font-size: 11.5px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
         }
 
-        /* Border Table Box */
-        .info-grid {
-            border: 1px solid #000000;
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 8px;
-        }
-        .info-grid td {
-            border: 1px solid #000000;
-            padding: 5px 8px;
-            vertical-align: top;
-            font-size: 11px;
-            line-height: 1.4;
-        }
-
-        /* Invoice Table */
-        .items-table {
-            width: 100%;
-            border-collapse: collapse;
-            border: 1px solid #000000;
-            margin-bottom: 0px;
-        }
-        .items-table th, .items-table td {
-            border: 1px solid #000000;
-            padding: 4px 6px;
-            font-size: 11px;
-        }
-        .items-table th {
-            font-weight: bold;
-            text-align: center;
-            background-color: #ffffff;
-            text-transform: uppercase;
-        }
-
-        /* Bottom Split Section */
-        .bottom-section {
+        /* Info Section (Shipped to & Slip meta) */
+        .meta-container {
             display: flex;
-            gap: 12px;
-            margin-top: 8px;
+            border-bottom: 1.5px solid #000000;
         }
-        .bottom-left {
-            flex: 1.1;
+        .meta-col-left {
+            flex: 1.25;
+            padding: 6px 10px;
+            border-right: 1.5px solid #000000;
+            font-size: 11px;
+            line-height: 1.45;
         }
-        .bottom-right {
+        .meta-col-right {
             flex: 1;
+            padding: 6px 10px;
+            font-size: 11px;
+            line-height: 1.45;
+        }
+        .meta-line {
+            margin-bottom: 2px;
+        }
+        .meta-line:last-child {
+            margin-bottom: 0;
         }
 
-        .sub-table {
+        /* Order remarks */
+        .remarks-container {
+            text-align: center;
+            padding: 4px 10px;
+            font-size: 11px;
+            border-bottom: 1.5px solid #000000;
+        }
+
+        /* Main items table */
+        .main-table {
             width: 100%;
             border-collapse: collapse;
-            border: 1px solid #000000;
+            table-layout: fixed;
         }
-        .sub-table th, .sub-table td {
-            border: 1px solid #000000;
+        .main-table th, .main-table td {
+            border: 1.5px solid #000000;
             padding: 3px 6px;
             font-size: 11px;
+            box-sizing: border-box;
         }
-        .sub-table th {
-            font-weight: bold;
-            background-color: #ffffff;
-            text-transform: uppercase;
+        .main-table th {
+            font-weight: 800;
+            text-align: center;
+            background: #ffffff;
+            border-top: none;
+        }
+        
+        /* Column Widths */
+        .col-sn { width: 45px; text-align: center; }
+        .col-prod { width: 100px; text-align: left; }
+        .col-grade { width: 75px; text-align: center; }
+        .col-qty { width: 75px; text-align: center; font-weight: 700; }
+        .col-price { width: 80px; text-align: right; }
+        .col-extra { width: 65px; text-align: right; }
+        .col-net { width: 85px; text-align: right; font-weight: 700; }
+        .col-total { width: 85px; text-align: right; font-weight: 700; }
+
+        .item-data-row td {
+            height: 135px;
+            vertical-align: top;
+            padding-top: 5px;
         }
 
-        .grand-total-row {
-            font-weight: bold;
-            font-size: 12px;
+        .total-summary-row td {
+            font-weight: 800;
+            padding: 4px 6px;
         }
+
+        .discount-summary-row td {
+            font-weight: 800;
+            padding: 4px 6px;
+        }
+
+        /* Lower Split Grid Table */
+        .bottom-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            border-top: 1.5px solid #000000;
+        }
+        .bottom-table th, .bottom-table td {
+            border: 1.5px solid #000000;
+            padding: 3px 6px;
+            font-size: 11px;
+            box-sizing: border-box;
+        }
+        .btm-prod { width: 220px; }
+        .btm-qty { width: 85px; text-align: center; }
+        .btm-rate { width: 95px; text-align: center; font-weight: 700; }
+        .btm-label { width: 160px; text-align: right; font-weight: 800; }
+        .btm-val { width: 85px; text-align: right; font-weight: 800; }
+
+        .avg-rate-header-row td {
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 4px 6px;
+        }
+        .avg-rate-col-header td {
+            font-weight: 800;
+            padding: 3px 6px;
+        }
+
         .grand-total-row td {
-            border-top: 2px solid #000000 !important;
-            padding: 5px 6px;
+            background-color: #000000 !important;
+            color: #ffffff !important;
+            padding: 6px 8px;
+            font-size: 12px;
+            font-weight: 900;
+            border-color: #000000 !important;
         }
 
         @media print {
@@ -130,196 +205,264 @@
                 padding: 0 !important;
                 margin: 0 !important;
             }
-            .invoice-box {
+            .print-controls {
+                display: none !important;
+            }
+            .invoice-sheet {
                 border: 2px solid #000000 !important;
                 box-shadow: none !important;
                 max-width: 100% !important;
                 width: 100% !important;
-                padding: 10px 12px !important;
                 margin: 0 !important;
-            }
-            .no-print {
-                display: none !important;
             }
             @page {
                 size: portrait;
-                margin: 6mm;
+                margin: 8mm;
             }
         }
     </style>
 </head>
 <body>
-    <div class="no-print text-center mb-3">
-        <button onclick="window.print()" class="btn btn-primary btn-sm fw-bold me-2"><i class="fa-solid fa-print"></i> Print Invoice</button>
-        <button onclick="window.close()" class="btn btn-secondary btn-sm fw-bold">Close</button>
+
+    <div class="print-controls">
+        <button onclick="window.print()" class="btn btn-primary">🖨️ Print / Save as PDF</button>
+        <a href="{{ route('sales.dispatch-invoicing') }}" class="btn btn-secondary">Close / Back to Dispatches</a>
     </div>
 
-    <div class="invoice-box">
-        <!-- Top Header -->
-        <div class="header-title">ESTIMATE data</div>
-        <div class="company-name">{{ $invoice->company_name ?? 'GURBAZ FARM MACHINERY PRIVATE LIMITED' }}</div>
-        <div class="company-gst">GST NO. {{ $invoice->company_gst ?? '03AAJCG7865K1Z5' }}</div>
+    @php
+        $totalQty = 0;
+        $totalAmount = 0;
+        $groupedProducts = [];
 
-        <!-- Info Grid (Shipped To & Metadata) -->
-        <table class="info-grid">
-            <tr>
-                <td style="width: 58%;">
-                    <div><strong>SHIPPED TO.</strong> {{ strtoupper($invoice->customer_name) }}</div>
-                    <div><strong>GST NO.</strong> {{ strtoupper($invoice->customer_gst ?: 'N/A') }}</div>
-                    <div><strong>ADDRESS.</strong> {{ strtoupper($invoice->customer_address ?: 'PATIALA, PATIALA') }}</div>
-                </td>
-                <td style="width: 42%;">
-                    <div><strong>SLIP NO. :</strong> {{ $invoice->invoice_no ?: $invoice->id }}</div>
-                    <div><strong>DATE :</strong> {{ date('d-m-Y', strtotime($invoice->invoice_date)) }}</div>
-                    <div><strong>TOKEN NO. :</strong> {{ $invoice->dispatch_id ?: $invoice->vehicle_id ?: '6' }}</div>
-                    <div><strong>VEHICLE NO. :</strong> {{ strtoupper($invoice->vehicle_no ?: 'PB11DA2794') }}</div>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    <strong>ORDER REMARKS.:</strong> {{ $invoice->remarks ?: date('d-m-Y', strtotime($invoice->invoice_date)) }}
-                </td>
-            </tr>
-        </table>
+        foreach($invoice->items as $item) {
+            $qty = floatval($item->weight_tons);
+            $rate = floatval($item->rate);
+            $extra = floatval($item->extra_charges ?? 0);
+            $netRate = $rate + $extra;
+            $amount = floatval($item->amount);
+            if ($amount <= 0 && $qty > 0) {
+                $amount = $qty * $netRate;
+            }
 
-        <!-- Products Table -->
-        <table class="items-table">
+            $totalQty += $qty;
+            $totalAmount += $amount;
+
+            $pName = strtoupper($item->product_name ?: 'MS ANGLE');
+            if (!isset($groupedProducts[$pName])) {
+                $groupedProducts[$pName] = ['qty' => 0, 'amount' => 0];
+            }
+            $groupedProducts[$pName]['qty'] += $qty;
+            $groupedProducts[$pName]['amount'] += $amount;
+        }
+
+        // Cash discount
+        $discountPercent = 0;
+        $discountAmount = 0;
+        if (isset($invoice->discount_amount) && $invoice->discount_amount > 0) {
+            $discountAmount = floatval($invoice->discount_amount);
+            $discountPercent = $totalAmount > 0 ? round(($discountAmount / $totalAmount) * 100) : 0;
+        } elseif (isset($dispatch) && isset($dispatch->cashdiscount) && $dispatch->cashdiscount > 0) {
+            $discountAmount = floatval($dispatch->cashdiscount);
+            $discountPercent = $totalAmount > 0 ? round(($discountAmount / $totalAmount) * 100) : 0;
+        } elseif (isset($invoice->discount_percent) && $invoice->discount_percent > 0) {
+            $discountPercent = floatval($invoice->discount_percent);
+            $discountAmount = round(($totalAmount * $discountPercent) / 100);
+        } else {
+            $calcTaxable = floatval($invoice->taxable_amount ?? 0);
+            if ($calcTaxable > 0 && $totalAmount > $calcTaxable) {
+                $diff = $totalAmount - $calcTaxable + floatval($invoice->other_charges ?? 0);
+                if ($diff > 0) {
+                    $discountAmount = $diff;
+                    $discountPercent = round(($discountAmount / $totalAmount) * 100);
+                }
+            }
+        }
+
+        $labor = floatval($invoice->freight_charges ?? ($dispatch->laborchr ?? 0));
+        $otherCharges = floatval($invoice->other_charges ?? ($dispatch->otherchr ?? 0));
+        
+        $taxableAmt = floatval($invoice->taxable_amount ?? 0);
+        if ($taxableAmt <= 0) {
+            $taxableAmt = ($totalAmount - $discountAmount) + $otherCharges;
+        }
+
+        $gstRate = floatval(($invoice->cgst_rate ?? 0) + ($invoice->sgst_rate ?? 0) + ($invoice->igst_rate ?? 0));
+        if ($gstRate <= 0) $gstRate = 18;
+
+        $gstAmount = floatval(($invoice->cgst_amount ?? 0) + ($invoice->sgst_amount ?? 0) + ($invoice->igst_amount ?? 0));
+        if ($gstAmount <= 0) {
+            $gstAmount = round(($taxableAmt * $gstRate) / 100);
+        }
+
+        $tcs = floatval($invoice->tcs_amount ?? ($dispatch->tcs ?? 0));
+
+        $grandTotal = floatval($invoice->grand_total ?? 0);
+        if ($grandTotal <= 0) {
+            $grandTotal = round($taxableAmt + $gstAmount + $labor + $tcs);
+        }
+
+        $tokenNo = $vehicle->tokenid ?? $dispatch->tokenid ?? $invoice->vehicle_id ?? $invoice->dispatch_id ?? '4';
+    @endphp
+
+    <div class="invoice-sheet">
+        
+        <!-- Header -->
+        <div class="inv-header">
+            <div class="doc-title">ESTIMATE</div>
+            <div class="company-title">{{ $invoice->customer_name ?: '' }}</div>
+            <div class="company-gstin">GST No. {{ $invoice->customer_gst ?: '' }}</div>
+        </div>
+
+        <!-- Shipped To & Metadata Grid -->
+        <div class="meta-container">
+            <div class="meta-col-left">
+                <div class="meta-line"><strong>Shipped To.</strong> &nbsp;{{ strtoupper($invoice->customer_name ?: '') }}</div>
+                <div class="meta-line"><strong>GST No.</strong> &nbsp;{{ strtoupper($invoice->customer_gst ?: '') }}</div>
+                <div class="meta-line"><strong>Address.</strong> &nbsp;{{ $invoice->customer_address ?: '' }}</div>
+            </div>
+            <div class="meta-col-right">
+                <div class="meta-line"><strong>Slip No.:</strong> &nbsp;<strong>{{ $invoice->invoice_no ?: $invoice->id }}</strong></div>
+                <div class="meta-line"><strong>Date:</strong> &nbsp;{{ date('d/m/Y', strtotime($invoice->invoice_date ?: date('Y-m-d'))) }}</div>
+                <div class="meta-line"><strong>Token No.:</strong> &nbsp;<strong>{{ $tokenNo }}</strong></div>
+                <div class="meta-line"><strong>Vehicle No.:</strong> &nbsp;<strong>{{ strtoupper($invoice->vehicle_no ?: ($vehicle->vehicleno ?? '')) }}</strong></div>
+            </div>
+        </div>
+
+        <!-- Order Remarks -->
+        <div class="remarks-container">
+            <strong>Order Remarks.:</strong> &nbsp;{{ $invoice->remarks ?: '' }}
+        </div>
+
+        <!-- Items Table -->
+        <table class="main-table">
             <thead>
                 <tr>
-                    <th style="width: 35px;">S.N.</th>
-                    <th>PRODUCT</th>
-                    <th style="width: 75px;" class="text-end">QTY. (MT)</th>
-                    <th style="width: 90px;" class="text-end">PRICE (₹)</th>
-                    <th style="width: 65px;" class="text-end">EXTRA (₹)</th>
-                    <th style="width: 95px;" class="text-end">NET AMNT. (₹)</th>
-                    <th style="width: 95px;" class="text-end">TOTAL (₹)</th>
+                    <th class="col-sn">S.N.</th>
+                    <th class="col-prod">Product</th>
+                    <th class="col-grade">Grade</th>
+                    <th class="col-qty">Qty.</th>
+                    <th class="col-price">Price (₹)</th>
+                    <th class="col-extra">Extra (₹)</th>
+                    <th class="col-net">Net Amnt. (₹)</th>
+                    <th class="col-total">Total</th>
                 </tr>
             </thead>
             <tbody>
-                @php
-                    $totalQty = 0;
-                    $totalAmount = 0;
-                    $groupedProducts = [];
-                @endphp
-
                 @foreach($invoice->items as $index => $item)
                     @php
                         $qty = floatval($item->weight_tons);
                         $rate = floatval($item->rate);
                         $extra = floatval($item->extra_charges ?? 0);
-                        $netAmnt = $rate + $extra;
+                        $netRate = $rate + $extra;
                         $amount = floatval($item->amount);
-
-                        $totalQty += $qty;
-                        $totalAmount += $amount;
-
-                        $prodName = strtoupper($item->product_name ?: 'BRIGHT BAR');
-                        if(!isset($groupedProducts[$prodName])) {
-                            $groupedProducts[$prodName] = ['qty' => 0, 'amount' => 0];
+                        if ($amount <= 0 && $qty > 0) {
+                            $amount = $qty * $netRate;
                         }
-                        $groupedProducts[$prodName]['qty'] += $qty;
-                        $groupedProducts[$prodName]['amount'] += $amount;
                     @endphp
-                    <tr>
-                        <td class="text-center">{{ $index + 1 }}</td>
-                        <td class="fw-bold">{{ strtoupper($item->product_name ?: 'BRIGHT BAR') }}</td>
-                        <td class="text-end">{{ number_format($qty, 3) }}</td>
-                        <td class="text-end">{{ number_format($rate, 2) }}</td>
-                        <td class="text-end">{{ number_format($extra, 0) }}</td>
-                        <td class="text-end">{{ number_format($netAmnt, 0) }}</td>
-                        <td class="text-end fw-bold">{{ number_format($amount, 0) }}</td>
+                    <tr class="item-data-row">
+                        <td class="col-sn">{{ $index + 1 }}</td>
+                        <td class="col-prod">{{ $item->size_name ?: $item->product_name }}</td>
+                        <td class="col-grade">{{ $item->grade_name ?: 'MS' }}</td>
+                        <td class="col-qty">{{ number_format($qty, 3) }}</td>
+                        <td class="col-price">{{ number_format($rate, 0) }}</td>
+                        <td class="col-extra">{{ number_format($extra, 0) }}</td>
+                        <td class="col-net">{{ number_format($netRate, 0) }}</td>
+                        <td class="col-total">{{ number_format($amount, 0) }}</td>
                     </tr>
                 @endforeach
 
                 <!-- Total Row -->
-                <tr class="fw-bold">
-                    <td colspan="2" class="text-end">TOTAL</td>
-                    <td class="text-end">{{ number_format($totalQty, 3) }}</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td class="text-end">{{ number_format($totalAmount, 3) }}</td>
+                <tr class="total-summary-row">
+                    <td colspan="2" style="text-align: right; border-right: 1.5px solid #000;">Total</td>
+                    <td style="border-left: none; border-right: 1.5px solid #000;"></td>
+                    <td class="col-qty">{{ number_format($totalQty, 3) }}</td>
+                    <td colspan="3" style="border-right: 1.5px solid #000;"></td>
+                    <td class="col-total">{{ number_format($totalAmount, 0) }}</td>
                 </tr>
 
                 <!-- Cash Discount Row -->
-                <tr>
-                    <td colspan="6" class="text-end fw-bold">CASH DISCOUNT {{ $invoice->discount_percent ? $invoice->discount_percent . '%' : '0%' }}</td>
-                    <td class="text-end fw-bold">{{ number_format($invoice->discount_amount ?? 0, 0) }}</td>
+                <tr class="discount-summary-row">
+                    <td colspan="7" style="text-align: right; padding-right: 15px;">
+                        Cash Discount {{ $discountPercent > 0 ? $discountPercent . '%' : '' }}
+                    </td>
+                    <td class="col-total">
+                        {{ number_format($discountAmount, 0) }}
+                    </td>
                 </tr>
             </tbody>
         </table>
 
-        <!-- Bottom Split Section -->
-        <div class="bottom-section">
-            <!-- Left Box: Average Sale Rate -->
-            <div class="bottom-left">
-                <div class="fw-bold mb-1" style="font-size: 11px;">AVERAGE SALE RATE (₹):</div>
-                <table class="sub-table">
-                    <thead>
-                        <tr>
-                            <th>PRODUCT</th>
-                            <th class="text-end">QTY (MT)</th>
-                            <th class="text-end">AVG RATE</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($groupedProducts as $pName => $pData)
-                            @php
-                                $avgRate = $pData['qty'] > 0 ? ($pData['amount'] / $pData['qty']) : 0;
-                            @endphp
-                            <tr>
-                                <td class="fw-bold">{{ $pName }}</td>
-                                <td class="text-end">{{ number_format($pData['qty'], 2) }}</td>
-                                <td class="text-end">{{ number_format($avgRate, 0) }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+        <!-- Lower Section: Average Sale Rate & Summary -->
+        @php
+            $groupList = [];
+            foreach($groupedProducts as $pName => $pData) {
+                $avgRate = $pData['qty'] > 0 ? ($pData['amount'] / $pData['qty']) : 0;
+                $groupList[] = [
+                    'name' => $pName,
+                    'qty' => number_format($pData['qty'], 3),
+                    'rate' => number_format($avgRate, 0)
+                ];
+            }
 
-            <!-- Right Box: Totals & Charges -->
-            <div class="bottom-right">
-                <table class="sub-table">
-                    <tbody>
-                        <tr>
-                            <td class="fw-bold">LABOR (₹)</td>
-                            <td class="text-end fw-bold" style="width: 100px;">{{ number_format($invoice->freight_charges ?? 0, 0) }}</td>
-                        </tr>
-                        <tr>
-                            <td class="fw-bold">OTHER CHARGES (₹)</td>
-                            <td class="text-end fw-bold">{{ number_format($invoice->other_charges ?? 0, 3) }}</td>
-                        </tr>
-                        <tr>
-                            <td class="fw-bold">TAXABLE AMT.</td>
-                            <td class="text-end fw-bold">{{ number_format($invoice->taxable_amount ?? 0, 3) }}</td>
-                        </tr>
-                        @php
-                            $gstTotal = ($invoice->cgst_amount ?? 0) + ($invoice->sgst_amount ?? 0) + ($invoice->igst_amount ?? 0);
-                            $gstRate = ($invoice->cgst_rate ?? 0) + ($invoice->sgst_rate ?? 0) + ($invoice->igst_rate ?? 0);
-                        @endphp
-                        <tr>
-                            <td class="fw-bold">GST {{ $gstRate > 0 ? (int)$gstRate . '%' : '18%' }}</td>
-                            <td class="text-end fw-bold">{{ number_format($gstTotal, 0) }}</td>
-                        </tr>
-                        <tr>
-                            <td class="fw-bold">TCS</td>
-                            <td class="text-end fw-bold">{{ number_format($invoice->tcs_amount ?? 0, 3) }}</td>
-                        </tr>
-                        <tr class="grand-total-row">
-                            <td class="fw-bold text-uppercase">GRAND TOTAL</td>
-                            <td class="text-end fw-bold">{{ number_format($invoice->grand_total ?? 0, 0) }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+            $chargesList = [
+                ['label' => 'Labor (₹)', 'val' => number_format($labor, 0)],
+                ['label' => 'Other Charges (₹)', 'val' => number_format($otherCharges, 0)],
+                ['label' => 'TAXABLE AMT.', 'val' => number_format($taxableAmt, 0)],
+                ['label' => 'GST ' . ($gstRate > 0 ? (int)$gstRate . '%' : '18%'), 'val' => number_format($gstAmount, 0)],
+                ['label' => 'TCS', 'val' => number_format($tcs, 0)]
+            ];
+
+            $totalRows = max(count($groupList), count($chargesList));
+        @endphp
+
+        <table class="bottom-table">
+            <!-- Header Row for Average Sale Rate -->
+            <tr class="avg-rate-header-row">
+                <td colspan="3" style="border-right: 1.5px solid #000;">AVERAGE SALE RATE (₹):</td>
+                <td colspan="2" style="border-left: none;"></td>
+            </tr>
+            <!-- Sub Header Row -->
+            <tr class="avg-rate-col-header">
+                <td class="btm-prod">Product</td>
+                <td class="btm-qty">Qty (MT)</td>
+                <td class="btm-rate">Avg Rate</td>
+                <td colspan="2" style="border-left: 1.5px solid #000;"></td>
+            </tr>
+
+            <!-- Rows -->
+            @for($i = 0; $i < $totalRows; $i++)
+                @php
+                    $prodItem = $groupList[$i] ?? null;
+                    $chargeItem = $chargesList[$i] ?? null;
+                @endphp
+                <tr>
+                    <td class="btm-prod" style="font-weight: 700;">{{ $prodItem ? $prodItem['name'] : '' }}</td>
+                    <td class="btm-qty" style="font-weight: 700;">{{ $prodItem ? $prodItem['qty'] : '' }}</td>
+                    <td class="btm-rate">{{ $prodItem ? $prodItem['rate'] : '' }}</td>
+                    <td class="btm-label">{{ $chargeItem ? $chargeItem['label'] : '' }}</td>
+                    <td class="btm-val">{{ $chargeItem ? $chargeItem['val'] : '' }}</td>
+                </tr>
+            @endfor
+
+            <!-- Grand Total Row -->
+            <tr class="grand-total-row">
+                <td colspan="4" style="text-align: right; padding-right: 15px;">GRAND TOTAL</td>
+                <td style="text-align: right; font-weight: 900;">{{ number_format($grandTotal, 0) }}</td>
+            </tr>
+        </table>
 
     </div>
 
     <script>
         window.onload = function() {
-            window.print();
+            setTimeout(function() {
+                window.print();
+            }, 300);
         };
+
+        window.addEventListener('afterprint', function() {
+            window.location.href = "{{ route('sales.dispatch-invoicing') }}";
+        });
     </script>
 </body>
 </html>

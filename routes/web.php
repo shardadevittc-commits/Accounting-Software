@@ -43,6 +43,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dispatch-invoicing', [InvoiceController::class, 'index'])->name('sales.dispatch-invoicing');
     Route::get('/invoices/pending-vehicles', [InvoiceController::class, 'getPendingVehicles'])->name('invoices.pending-vehicles');
     Route::get('/invoices/dispatch-details', [InvoiceController::class, 'getDispatchDetails'])->name('invoices.dispatch-details');
+    Route::get('/invoices/next-number', [InvoiceController::class, 'getNextInvoiceNumber'])->name('invoices.next-number');
     Route::get('/invoices/sale-order-dispatches', [InvoiceController::class, 'getSaleOrderDispatches'])->name('invoices.sale-order-dispatches');
     Route::post('/invoices/store', [InvoiceController::class, 'store'])->name('invoices.store');
     Route::get('/invoices/print/{id}', [InvoiceController::class, 'printInvoice'])->name('invoices.print');
