@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Mail\InvoiceShareMail;
 
 class InvoiceController extends Controller
 {
@@ -921,18 +924,46 @@ class InvoiceController extends Controller
         ]);
 
         try {
-            $invoice = Invoice::find($request->invoice_id);
-            $invoiceNo = $invoice ? $invoice->invoice_no : ('INV-' . $request->invoice_id);
+            $invoice = Invoice::with('items')->find($request->invoice_id);
+            if (!$invoice) {
+                return response()->json(['status' => 'error', 'message' => 'Invoice not found.'], 404);
+            }
+
+            $invoiceNo = $invoice->invoice_no ?: ('INV-' . $invoice->id);
             $toEmail = trim($request->input('to'));
             $subject = trim($request->input('subject'));
-            $attachPdf = $request->boolean('attach_pdf', true);
+            $customMessage = trim($request->input('message'));
 
-            // Log dispatch for accounting audit trail
-            Log::info("Invoice Share Email: Invoice #{$invoiceNo} -> To: {$toEmail} | Subject: {$subject} | Attach PDF: " . ($attachPdf ? 'YES' : 'NO'));
+            // Fetch dispatch & vehicle details for PDF rendering
+            $dispatch = null;
+            $vehicle = null;
+            try {
+                if ($invoice->dispatch_id) {
+                    $dispatch = DB::selectOne("SELECT * FROM devine.dispatch WHERE dispatchid = ?", [$invoice->dispatch_id]);
+                }
+                if ($invoice->vehicle_id) {
+                    $vehicle = DB::selectOne("SELECT * FROM devine.gate WHERE gid = ?", [$invoice->vehicle_id]);
+                } elseif ($dispatch && !empty($dispatch->vehicleid)) {
+                    $vehicle = DB::selectOne("SELECT * FROM devine.gate WHERE gid = ?", [$dispatch->vehicleid]);
+                }
+            } catch (\Exception $e) {
+                Log::info("PDF invoice relations error: " . $e->getMessage());
+            }
+
+            // Generate Tax Invoice PDF Binary
+            $pdf = Pdf::loadView('accounting.invoice_pdf', compact('invoice', 'dispatch', 'vehicle'));
+            $pdf->setPaper('a4', 'portrait');
+            $pdfData = $pdf->output();
+            $pdfFilename = 'Invoice_' . str_replace('/', '_', $invoiceNo) . '.pdf';
+
+            // Send via dedicated Laravel Mailable & Blade Template
+            Mail::to($toEmail)->send(new InvoiceShareMail($invoice, $customMessage, $pdfData, $pdfFilename, $subject));
+
+            Log::info("Invoice Share Email Sent with PDF Attachment: Invoice #{$invoiceNo} -> To: {$toEmail}");
 
             return response()->json([
                 'status' => 'success',
-                'message' => "Invoice {$invoiceNo} email sent successfully to {$toEmail}.",
+                'message' => "Invoice {$invoiceNo} PDF sent successfully to {$toEmail}.",
                 'invoice_no' => $invoiceNo,
                 'recipient' => $toEmail
             ]);
