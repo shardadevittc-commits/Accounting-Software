@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Mail\InvoiceShareMail;
+use App\Services\MetaWhatsAppService;
 
 class InvoiceController extends Controller
 {
@@ -977,43 +978,108 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Share invoice via WhatsApp.
+     * Share invoice via Meta WhatsApp Cloud API (Direct Message + PDF Document).
      */
-    public function shareWhatsapp(Request $request)
+    public function shareWhatsapp(Request $request, MetaWhatsAppService $waService)
     {
         $request->validate([
             'invoice_id' => 'required',
             'mobile' => 'required|string',
-            'message' => 'required|string',
+            'message' => 'nullable|string',
         ]);
 
         try {
-            $invoice = Invoice::find($request->invoice_id);
-            $invoiceNo = $invoice ? $invoice->invoice_no : ('INV-' . $request->invoice_id);
-            $rawMobile = trim($request->input('mobile'));
-            $message = trim($request->input('message'));
-
-            $cleanMobile = preg_replace('/[^0-9]/', '', $rawMobile);
-            if (strlen($cleanMobile) === 10) {
-                $cleanMobile = '91' . $cleanMobile;
+            $invoice = Invoice::with('items')->find($request->invoice_id);
+            if (!$invoice) {
+                return response()->json(['status' => 'error', 'message' => 'Invoice not found.'], 404);
             }
 
-            $waUrl = 'https://api.whatsapp.com/send?phone=' . $cleanMobile . '&text=' . urlencode($message);
+            $invoiceNo = $invoice->invoice_no ?: ('INV-' . $invoice->id);
+            $rawMobile = trim($request->input('mobile'));
+            $customMessage = trim($request->input('message') ?: '');
+            $attachPdf = $request->boolean('attach_pdf', true);
 
-            Log::info("Invoice Share WhatsApp dispatched: Invoice #{$invoiceNo} -> Mobile: {$cleanMobile}");
+            $customerName = $invoice->customer_name ?: 'Valued Customer';
+            $totalAmount = number_format($invoice->grand_total, 2);
+            $invoiceDate = date('d-m-Y', strtotime($invoice->invoice_date ?: date('Y-m-d')));
 
-            return response()->json([
-                'status' => 'success',
-                'message' => "WhatsApp message prepared for {$rawMobile}.",
-                'invoice_no' => $invoiceNo,
-                'mobile' => $cleanMobile,
-                'wa_url' => $waUrl
-            ]);
-        } catch (\Exception $e) {
-            Log::error("Invoice Share WhatsApp Error: " . $e->getMessage());
+            // Build Caption / Text message
+            $formattedCaption = "📄 *Tax Invoice #{$invoiceNo}*\n\n"
+                              . "Dear {$customerName},\n\n"
+                              . (!empty($customMessage) ? "{$customMessage}\n\n" : "")
+                              . "• *Invoice Date:* {$invoiceDate}\n"
+                              . "• *Total Amount:* ₹ {$totalAmount}\n\n"
+                              . "Official Tax Invoice PDF is attached.\n"
+                              . "Devine Accounting ERP";
+
+            $sendResult = null;
+
+            if ($attachPdf) {
+                // Fetch dispatch & vehicle details for PDF rendering
+                $dispatch = null;
+                $vehicle = null;
+                try {
+                    if ($invoice->dispatch_id) {
+                        $dispatch = DB::selectOne("SELECT * FROM devine.dispatch WHERE dispatchid = ?", [$invoice->dispatch_id]);
+                    }
+                    if ($invoice->vehicle_id) {
+                        $vehicle = DB::selectOne("SELECT * FROM devine.gate WHERE gid = ?", [$invoice->vehicle_id]);
+                    } elseif ($dispatch && !empty($dispatch->vehicleid)) {
+                        $vehicle = DB::selectOne("SELECT * FROM devine.gate WHERE gid = ?", [$dispatch->vehicleid]);
+                    }
+                } catch (\Exception $e) {
+                    Log::info("PDF invoice relations error for WhatsApp: " . $e->getMessage());
+                }
+
+                // Generate Tax Invoice PDF Binary
+                $pdf = Pdf::loadView('accounting.invoice_pdf', compact('invoice', 'dispatch', 'vehicle'));
+                $pdf->setPaper('a4', 'portrait');
+                $pdfData = $pdf->output();
+                $pdfFilename = 'Invoice_' . str_replace('/', '_', $invoiceNo) . '.pdf';
+
+                // Upload PDF to Meta WhatsApp Cloud API Media endpoint
+                $mediaId = $waService->uploadMedia($pdfData, $pdfFilename, 'application/pdf');
+
+                if ($mediaId) {
+                    $sendResult = $waService->sendDocument(
+                        $rawMobile,
+                        $mediaId,
+                        $pdfFilename,
+                        $formattedCaption
+                    );
+                } else {
+                    $sendResult = $waService->sendTextMessage($rawMobile, $formattedCaption);
+                }
+            } else {
+                $sendResult = $waService->sendTextMessage($rawMobile, $formattedCaption);
+            }
+
+            if ($sendResult && !empty($sendResult['success'])) {
+                Log::info("Meta WhatsApp dispatched successfully: Invoice #{$invoiceNo} -> Recipient: +{$sendResult['recipient']}");
+
+                return response()->json([
+                    'status' => 'success',
+                    'message' => "Invoice {$invoiceNo} PDF sent via WhatsApp to +{$sendResult['recipient']} successfully!",
+                    'invoice_no' => $invoiceNo,
+                    'mobile' => $sendResult['recipient'],
+                    'data' => $sendResult['data'] ?? null
+                ]);
+            }
+
+            $errMsg = $sendResult['error'] ?? 'WhatsApp Cloud API could not deliver the message.';
+            Log::error("Meta WhatsApp dispatch failed: Invoice #{$invoiceNo} -> " . json_encode($sendResult));
+
             return response()->json([
                 'status' => 'error',
-                'message' => 'Failed to prepare WhatsApp dispatch: ' . $e->getMessage()
+                'message' => 'WhatsApp Cloud API Error: ' . $errMsg,
+                'details' => $sendResult['details'] ?? null
+            ], 400);
+
+        } catch (\Exception $e) {
+            Log::error("Invoice Share WhatsApp Exception: " . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to dispatch WhatsApp message: ' . $e->getMessage()
             ], 500);
         }
     }

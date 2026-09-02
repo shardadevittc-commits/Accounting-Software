@@ -2079,10 +2079,12 @@
         });
     }
 
-    // Send Invoice WhatsApp AJAX / Direct Web Dispatch
+    // Send Invoice WhatsApp via Meta WhatsApp Cloud API
     function sendInvoiceWhatsapp() {
         const btn = document.getElementById('btnSubmitWhatsapp');
         const form = document.getElementById('formShareWhatsapp');
+        if (!form) return;
+
         if (!form.checkValidity()) {
             form.reportValidity();
             return;
@@ -2090,7 +2092,7 @@
 
         const origHtml = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Preparing...`;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Sending WhatsApp...`;
 
         const formData = new FormData(form);
         formData.append('attach_pdf', document.getElementById('waAttachPdf').checked ? '1' : '0');
@@ -2111,18 +2113,15 @@
             if (res.status === 'success') {
                 const modal = bootstrap.Modal.getInstance(document.getElementById('shareInvoiceModal'));
                 if (modal) modal.hide();
-                showEnterpriseToast(res.message || 'WhatsApp message prepared!', 'success');
-                if (res.wa_url) {
-                    window.open(res.wa_url, '_blank');
-                }
+                showEnterpriseToast(res.message || 'WhatsApp message and PDF sent successfully!', 'success');
             } else {
-                showEnterpriseToast(res.message || 'Failed to prepare WhatsApp message.', 'error');
+                showEnterpriseToast(res.message || 'Failed to send WhatsApp message.', 'error');
             }
         })
         .catch(err => {
             btn.disabled = false;
             btn.innerHTML = origHtml;
-            showEnterpriseToast('Network error: ' + err.message, 'error');
+            showEnterpriseToast('An error occurred while sending WhatsApp message.', 'error');
         });
     }
 

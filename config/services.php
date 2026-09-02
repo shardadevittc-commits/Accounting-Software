@@ -21,6 +21,14 @@ return [
         'scheme' => 'https',
     ],
 
+    'meta_whatsapp' => [
+        'token' => env('META_WA_TOKEN'),
+        'phone_number_id' => env('META_WA_PHONE_NUMBER_ID'),
+        'business_account_id' => env('META_WA_BUSINESS_ACCOUNT_ID'),
+        'version' => env('META_WA_API_VERSION', 'v22.0'),
+        'template_name' => env('META_WA_TEMPLATE_NAME', null),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],
