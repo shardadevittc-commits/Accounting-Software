@@ -696,6 +696,230 @@
         </div>
     </div>
 </div>
+
+<!-- 5. FLOATING INVOICE SHARE POPOVER MENU -->
+<div id="sharePopover" class="share-popover d-none">
+    <div class="share-popover-header">
+        <span class="share-popover-title"><i class="fa-solid fa-share-nodes text-primary me-1"></i> Share Invoice</span>
+        <span class="share-popover-badge" id="popoverInvoiceNo">INV-2026</span>
+    </div>
+    <div class="d-flex flex-column">
+        <button type="button" class="share-popover-item" onclick="triggerShareAction('email')">
+            <div class="share-popover-icon icon-email">
+                <i class="fa-regular fa-envelope"></i>
+            </div>
+            <div class="share-popover-text">
+                <span class="share-popover-label">Email</span>
+                <span class="share-popover-sub">Send invoice via email</span>
+            </div>
+        </button>
+        <button type="button" class="share-popover-item" onclick="triggerShareAction('whatsapp')">
+            <div class="share-popover-icon icon-whatsapp">
+                <i class="fa-brands fa-whatsapp"></i>
+            </div>
+            <div class="share-popover-text">
+                <span class="share-popover-label">WhatsApp</span>
+                <span class="share-popover-sub">Send invoice through WhatsApp</span>
+            </div>
+        </button>
+        <button type="button" class="share-popover-item" onclick="triggerShareAction('copy_link')">
+            <div class="share-popover-icon icon-link">
+                <i class="fa-regular fa-copy"></i>
+            </div>
+            <div class="share-popover-text">
+                <span class="share-popover-label">Copy Link</span>
+                <span class="share-popover-sub">Copy invoice link</span>
+            </div>
+        </button>
+        
+        <div class="share-popover-divider"></div>
+        
+        <button type="button" class="share-popover-item" onclick="triggerShareAction('download_pdf')">
+            <div class="share-popover-icon icon-pdf">
+                <i class="fa-solid fa-file-pdf"></i>
+            </div>
+            <div class="share-popover-text">
+                <span class="share-popover-label">Download PDF</span>
+                <span class="share-popover-sub">Save offline copy</span>
+            </div>
+        </button>
+        <button type="button" class="share-popover-item" onclick="triggerShareAction('print')">
+            <div class="share-popover-icon icon-print">
+                <i class="fa-solid fa-print"></i>
+            </div>
+            <div class="share-popover-text">
+                <span class="share-popover-label">Print Invoice</span>
+                <span class="share-popover-sub">Open print dialog</span>
+            </div>
+        </button>
+    </div>
+</div>
+
+<!-- 6. ADVANCED SHARE INVOICE MODAL -->
+<div class="modal fade" id="shareInvoiceModal" tabindex="-1" aria-labelledby="shareInvoiceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 580px;">
+        <div class="modal-content shadow-lg" style="background-color: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 14px; overflow: hidden;">
+            
+            <!-- Modal Header -->
+            <div class="modal-header px-4 py-3" style="border-bottom: 1px solid var(--border-color); background: var(--main-body-bg);">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; background: var(--theme-primary-soft, rgba(37, 99, 235, 0.1)); color: var(--theme-primary, #2563eb);">
+                        <i class="fa-solid fa-share-nodes fs-6"></i>
+                    </div>
+                    <div>
+                        <h6 class="modal-title fw-bold mb-0" id="shareInvoiceModalLabel" style="color: var(--text-primary); font-size: 1.05rem;">Share Invoice</h6>
+                        <div class="fs-8 text-muted" id="shareModalSubtitle">INV-2026 • Super Steel</div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body p-4 share-modal-form">
+                
+                <!-- Invoice Summary Box -->
+                <div class="share-summary-box">
+                    <div class="share-summary-item">
+                        <span class="share-summary-label">Invoice No</span>
+                        <span class="share-summary-val font-monospace text-primary" id="smSummaryInvNo">INV-2026</span>
+                    </div>
+                    <div class="share-summary-item">
+                        <span class="share-summary-label">Customer</span>
+                        <span class="share-summary-val text-truncate" id="smSummaryCustomer">Super Steel</span>
+                    </div>
+                    <div class="share-summary-item">
+                        <span class="share-summary-label">Invoice Date</span>
+                        <span class="share-summary-val font-monospace" id="smSummaryDate">31 Aug 2026</span>
+                    </div>
+                    <div class="share-summary-item">
+                        <span class="share-summary-label">Taxable Amount</span>
+                        <span class="share-summary-val font-monospace text-success" id="smSummaryAmount">₹5,85,000.00</span>
+                    </div>
+                </div>
+
+                <!-- Share Via Selector Cards -->
+                <div class="mb-3">
+                    <label class="form-label d-block text-muted fs-8 mb-2">Share via</label>
+                    <div class="share-channel-grid">
+                        <!-- Email Card -->
+                        <div class="share-channel-card channel-email active" id="channelCardEmail" onclick="switchShareChannel('email')">
+                            <div class="share-channel-card-icon">
+                                <i class="fa-regular fa-envelope"></i>
+                            </div>
+                            <div>
+                                <div class="share-channel-card-title">Email</div>
+                                <div class="share-channel-card-sub">Send via Email</div>
+                            </div>
+                            <div class="share-channel-check">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                        </div>
+
+                        <!-- WhatsApp Card -->
+                        <div class="share-channel-card channel-whatsapp" id="channelCardWhatsapp" onclick="switchShareChannel('whatsapp')">
+                            <div class="share-channel-card-icon">
+                                <i class="fa-brands fa-whatsapp"></i>
+                            </div>
+                            <div>
+                                <div class="share-channel-card-title">WhatsApp</div>
+                                <div class="share-channel-card-sub">Send via WhatsApp</div>
+                            </div>
+                            <div class="share-channel-check">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EMAIL FORM SECTION -->
+                <div id="sectionShareEmail">
+                    <form id="formShareEmail" onsubmit="event.preventDefault(); sendInvoiceEmail();">
+                        <input type="hidden" id="emailInvoiceId" name="invoice_id">
+                        
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-7">
+                                <label class="form-label">To <span class="text-danger">*</span></label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-transparent border-end-0 text-muted" style="border-color: var(--border-color);"><i class="fa-regular fa-envelope"></i></span>
+                                    <input type="email" class="form-control border-start-0 ps-0" id="emailTo" name="to" placeholder="customer@email.com" required>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label">CC <span class="text-muted fw-normal fs-9">(Optional)</span></label>
+                                <input type="text" class="form-control" id="emailCc" name="cc" placeholder="accounts@company.com">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Subject <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control fw-semibold" id="emailSubject" name="subject" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Message</label>
+                            <textarea class="form-control font-monospace" id="emailMessage" name="message" rows="4" style="resize: vertical;"></textarea>
+                        </div>
+
+                        <div class="d-flex align-items-center justify-content-between pt-2 border-top" style="border-color: var(--border-color) !important;">
+                            <label class="share-attach-pill mb-0">
+                                <input type="checkbox" id="emailAttachPdf" class="form-check-input mt-0" checked>
+                                <span><i class="fa-solid fa-paperclip text-muted me-1"></i> Attach Invoice PDF</span>
+                            </label>
+                            <div class="d-flex align-items-center gap-2">
+                                <button type="button" class="btn-saas-ghost px-3" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn-saas-primary px-4" id="btnSubmitEmail">
+                                    <i class="fa-regular fa-paper-plane me-1"></i> <span>Send Email</span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- WHATSAPP FORM SECTION -->
+                <div id="sectionShareWhatsapp" class="d-none">
+                    <form id="formShareWhatsapp" onsubmit="event.preventDefault(); sendInvoiceWhatsapp();">
+                        <input type="hidden" id="waInvoiceId" name="invoice_id">
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Customer</label>
+                                <input type="text" class="form-control fw-bold" id="waCustomerName" readonly style="opacity: 0.85; background: var(--main-body-bg);">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Mobile Number <span class="text-danger">*</span></label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-transparent border-end-0 text-muted" style="border-color: var(--border-color);"><i class="fa-solid fa-phone"></i></span>
+                                    <input type="tel" class="form-control border-start-0 ps-0 font-monospace fw-bold" id="waMobile" name="mobile" placeholder="+91 9876543210" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Message</label>
+                            <textarea class="form-control font-monospace" id="waMessage" name="message" rows="5" style="resize: vertical;"></textarea>
+                        </div>
+
+                        <div class="d-flex align-items-center justify-content-between pt-2 border-top" style="border-color: var(--border-color) !important;">
+                            <label class="share-attach-pill mb-0">
+                                <input type="checkbox" id="waAttachPdf" class="form-check-input mt-0" checked>
+                                <span><i class="fa-solid fa-paperclip text-muted me-1"></i> Attach Invoice PDF</span>
+                            </label>
+                            <div class="d-flex align-items-center gap-2">
+                                <button type="button" class="btn-saas-ghost px-3" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn-whatsapp px-4" id="btnSubmitWhatsapp">
+                                    <i class="fa-brands fa-whatsapp me-1"></i> <span>Send WhatsApp</span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 7. TOAST NOTIFICATION CONTAINER -->
+<div id="enterpriseToastContainer" class="enterprise-toast-container"></div>
 @endsection
 
 @push('scripts')
@@ -890,12 +1114,22 @@
                         </span>
                         <span class="status-inv-subtag">${d.invoice_no}</span>
                     </div>`;
+                
+                const safeParty = (d.partyname || 'Customer').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                const safeEmail = (d.email || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                const safeMobile = (d.mobile || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                const safeVehicle = (d.vehicleno || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
                 actionsHtml = `
                     <div class="action-buttons-wrap">
                         <a href="/invoices/print/${d.invoice_id}" target="_blank" class="btn-saas-outline-info" title="View & Print Tax Invoice">
                             <i class="fa-solid fa-file-invoice"></i>
                             <span>View Invoice</span>
                         </a>
+                        <button type="button" class="btn-saas-outline-share" onclick="openSharePopover(event, '${d.invoice_id}', '${d.invoice_no}', '${safeParty}', '${dateStr}', '${amountVal}', '${safeMobile}', '${safeEmail}', '${safeVehicle}')" title="Share Invoice via Email, WhatsApp, Link or PDF">
+                            <i class="fa-solid fa-share-nodes"></i>
+                            <span>Share</span>
+                        </button>
                     </div>`;
             } else {
                 statusBadgeHtml = `
@@ -1569,6 +1803,360 @@
     // Return to Queue
     function returnToQueue() {
         showSection('queue');
+    }
+
+    /* ==========================================================================
+       INVOICE SHARING POPOVER, MODAL & TOAST HANDLERS
+       ========================================================================== */
+
+    window.currentShareInvoice = null;
+
+    // Open Floating Share Popover Menu
+    function openSharePopover(e, invoiceId, invoiceNo, customerName, invoiceDate, amount, mobile, email, vehicleNo) {
+        if (e && e.stopPropagation) e.stopPropagation();
+        
+        window.currentShareInvoice = {
+            id: invoiceId,
+            invoice_no: invoiceNo,
+            customer_name: customerName,
+            invoice_date: invoiceDate,
+            amount: amount,
+            mobile: mobile,
+            email: email,
+            vehicle_no: vehicleNo || ''
+        };
+
+        const popover = document.getElementById('sharePopover');
+        document.getElementById('popoverInvoiceNo').innerText = invoiceNo;
+
+        // Reset active state on any existing share buttons
+        document.querySelectorAll('.btn-saas-outline-share.active').forEach(b => b.classList.remove('active'));
+        
+        const btn = e.currentTarget;
+        if (btn) btn.classList.add('active');
+
+        // Position popover relative to button with boundary protection
+        const rect = btn.getBoundingClientRect();
+        popover.classList.remove('d-none');
+        
+        const popoverWidth = 250;
+        const popoverHeight = 230;
+
+        let top = rect.bottom + 6;
+        let left = rect.right - popoverWidth;
+
+        // Ensure left boundary
+        if (left < 12) left = 12;
+        
+        // If flips near bottom of viewport
+        if (top + popoverHeight > window.innerHeight) {
+            top = Math.max(12, rect.top - popoverHeight - 6);
+        }
+
+        popover.style.top = top + 'px';
+        popover.style.left = left + 'px';
+
+        // Trigger CSS entry animation
+        requestAnimationFrame(() => {
+            popover.classList.add('show');
+        });
+    }
+
+    // Close Floating Popover
+    function closeSharePopover() {
+        const popover = document.getElementById('sharePopover');
+        if (popover && popover.classList.contains('show')) {
+            popover.classList.remove('show');
+            setTimeout(() => {
+                popover.classList.add('d-none');
+            }, 150);
+        }
+        document.querySelectorAll('.btn-saas-outline-share.active').forEach(b => b.classList.remove('active'));
+    }
+
+    // Outside Click & Key Listeners for Popover
+    document.addEventListener('click', function(e) {
+        const popover = document.getElementById('sharePopover');
+        if (popover && !popover.contains(e.target) && !e.target.closest('.btn-saas-outline-share')) {
+            closeSharePopover();
+        }
+    });
+
+    window.addEventListener('resize', closeSharePopover);
+    window.addEventListener('scroll', closeSharePopover, true);
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeSharePopover();
+        }
+    });
+
+    // Route Popover Actions
+    function triggerShareAction(action) {
+        if (!window.currentShareInvoice) return;
+        const data = window.currentShareInvoice;
+        closeSharePopover();
+
+        if (action === 'email') {
+            openShareModal('email');
+        } else if (action === 'whatsapp') {
+            openShareModal('whatsapp');
+        } else if (action === 'copy_link') {
+            const printUrl = window.location.origin + '/invoices/print/' + data.id;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(printUrl).then(() => {
+                    showEnterpriseToast('Invoice link copied successfully.', 'success');
+                }).catch(() => {
+                    fallbackCopyText(printUrl);
+                });
+            } else {
+                fallbackCopyText(printUrl);
+            }
+        } else if (action === 'download_pdf') {
+            window.open('/invoices/print/' + data.id + '?download=1', '_blank');
+            showEnterpriseToast('Opening invoice PDF...', 'info');
+        } else if (action === 'print') {
+            window.open('/invoices/print/' + data.id + '?autoprint=1', '_blank');
+        }
+    }
+
+    // Clipboard Fallback
+    function fallbackCopyText(text) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+            document.execCommand('copy');
+            showEnterpriseToast('Invoice link copied successfully.', 'success');
+        } catch (err) {
+            showEnterpriseToast('Failed to copy link', 'error');
+        }
+        document.body.removeChild(ta);
+    }
+
+    // Open Interactive Share Modal
+    function openShareModal(channel = 'email') {
+        if (!window.currentShareInvoice) return;
+        const data = window.currentShareInvoice;
+
+        const vNo = (data.vehicle_no && data.vehicle_no !== 'UNASSIGNED') ? data.vehicle_no : '';
+        const vLine = vNo ? `\nVehicle No: ${vNo}` : '';
+
+        // Fill modal summary banner
+        document.getElementById('shareModalSubtitle').innerText = `${data.invoice_no} • ${data.customer_name}${vNo ? ` • ${vNo}` : ''}`;
+        document.getElementById('smSummaryInvNo').innerText = data.invoice_no;
+        document.getElementById('smSummaryCustomer').innerText = data.customer_name;
+        document.getElementById('smSummaryDate').innerText = data.invoice_date || 'N/A';
+        document.getElementById('smSummaryAmount').innerText = '₹' + data.amount;
+
+        // Fill Email Form
+        document.getElementById('emailInvoiceId').value = data.id;
+        document.getElementById('emailTo').value = data.email || '';
+        document.getElementById('emailCc').value = '';
+        document.getElementById('emailSubject').value = `Invoice ${data.invoice_no} - ${data.customer_name}${vNo ? ` (${vNo})` : ''}`;
+        document.getElementById('emailMessage').value = `Dear ${data.customer_name},\n\nPlease find attached invoice ${data.invoice_no} for ₹${data.amount}.${vLine}\n\nThank you for your business.`;
+
+        // Fill WhatsApp Form
+        document.getElementById('waInvoiceId').value = data.id;
+        document.getElementById('waCustomerName').value = data.customer_name;
+        document.getElementById('waMobile').value = data.mobile || '';
+        document.getElementById('waMessage').value = `Dear ${data.customer_name},\n\nYour invoice ${data.invoice_no} is ready.${vLine}\nInvoice Amount: ₹${data.amount}\n\nPlease find the invoice attached.\n\nThank you.`;
+
+        // Switch to chosen channel
+        switchShareChannel(channel);
+
+        // Dynamic background sync: Fetch latest verified customer email, mobile & vehicle_no for this invoice
+        if (data.id) {
+            fetch(`{{ route('invoices.share.details') }}?invoice_id=${data.id}`)
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status === 'success' && res.data) {
+                        if (res.data.email) {
+                            document.getElementById('emailTo').value = res.data.email;
+                            data.email = res.data.email;
+                        }
+                        if (res.data.mobile) {
+                            document.getElementById('waMobile').value = res.data.mobile;
+                            data.mobile = res.data.mobile;
+                        }
+                        if (res.data.customer_name) {
+                            document.getElementById('waCustomerName').value = res.data.customer_name;
+                            document.getElementById('smSummaryCustomer').innerText = res.data.customer_name;
+                        }
+                        if (res.data.vehicle_no && (!data.vehicle_no || data.vehicle_no === 'UNASSIGNED')) {
+                            data.vehicle_no = res.data.vehicle_no;
+                            const syncVLine = `\nVehicle No: ${res.data.vehicle_no}`;
+                            document.getElementById('shareModalSubtitle').innerText = `${data.invoice_no} • ${data.customer_name} • ${res.data.vehicle_no}`;
+                            document.getElementById('emailSubject').value = `Invoice ${data.invoice_no} - ${data.customer_name} (${res.data.vehicle_no})`;
+                            document.getElementById('emailMessage').value = `Dear ${data.customer_name},\n\nPlease find attached invoice ${data.invoice_no} for ₹${data.amount}.${syncVLine}\n\nThank you for your business.`;
+                            document.getElementById('waMessage').value = `Dear ${data.customer_name},\n\nYour invoice ${data.invoice_no} is ready.${syncVLine}\nInvoice Amount: ₹${data.amount}\n\nPlease find the invoice attached.\n\nThank you.`;
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.log("Customer contact sync notice:", err);
+                });
+        }
+
+        // Show Bootstrap modal
+        const modalEl = document.getElementById('shareInvoiceModal');
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modalInstance.show();
+    }
+
+    // Switch between Email & WhatsApp Channels inside modal
+    function switchShareChannel(channel) {
+        const cardEmail = document.getElementById('channelCardEmail');
+        const cardWa = document.getElementById('channelCardWhatsapp');
+        const secEmail = document.getElementById('sectionShareEmail');
+        const secWa = document.getElementById('sectionShareWhatsapp');
+
+        if (channel === 'whatsapp') {
+            cardEmail.classList.remove('active');
+            cardWa.classList.add('active');
+            secEmail.classList.add('d-none');
+            secWa.classList.remove('d-none');
+            setTimeout(() => {
+                const mobInput = document.getElementById('waMobile');
+                if (mobInput) mobInput.focus();
+            }, 100);
+        } else {
+            cardWa.classList.remove('active');
+            cardEmail.classList.add('active');
+            secWa.classList.add('d-none');
+            secEmail.classList.remove('d-none');
+            setTimeout(() => {
+                const toInput = document.getElementById('emailTo');
+                if (toInput) toInput.focus();
+            }, 100);
+        }
+    }
+
+    // Send Invoice Email AJAX
+    function sendInvoiceEmail() {
+        const btn = document.getElementById('btnSubmitEmail');
+        const form = document.getElementById('formShareEmail');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const origHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Sending...`;
+
+        const formData = new FormData(form);
+        formData.append('attach_pdf', document.getElementById('emailAttachPdf').checked ? '1' : '0');
+
+        fetch("{{ route('invoices.share.email') }}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        })
+        .then(res => res.json())
+        .then(res => {
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+
+            if (res.status === 'success') {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('shareInvoiceModal'));
+                if (modal) modal.hide();
+                showEnterpriseToast(res.message || 'Invoice sent via email successfully!', 'success');
+            } else {
+                showEnterpriseToast(res.message || 'Failed to send email.', 'error');
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+            showEnterpriseToast('Network error: ' + err.message, 'error');
+        });
+    }
+
+    // Send Invoice WhatsApp AJAX / Direct Web Dispatch
+    function sendInvoiceWhatsapp() {
+        const btn = document.getElementById('btnSubmitWhatsapp');
+        const form = document.getElementById('formShareWhatsapp');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const origHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Preparing...`;
+
+        const formData = new FormData(form);
+        formData.append('attach_pdf', document.getElementById('waAttachPdf').checked ? '1' : '0');
+
+        fetch("{{ route('invoices.share.whatsapp') }}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        })
+        .then(res => res.json())
+        .then(res => {
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+
+            if (res.status === 'success') {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('shareInvoiceModal'));
+                if (modal) modal.hide();
+                showEnterpriseToast(res.message || 'WhatsApp message prepared!', 'success');
+                if (res.wa_url) {
+                    window.open(res.wa_url, '_blank');
+                }
+            } else {
+                showEnterpriseToast(res.message || 'Failed to prepare WhatsApp message.', 'error');
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+            showEnterpriseToast('Network error: ' + err.message, 'error');
+        });
+    }
+
+    // Modern Enterprise Toast Notification System
+    function showEnterpriseToast(message, type = 'success') {
+        const container = document.getElementById('enterpriseToastContainer');
+        if (!container) return;
+
+        const toast = document.createElement('div');
+        toast.className = `enterprise-toast toast-${type}`;
+        
+        let iconClass = 'fa-circle-check';
+        if (type === 'error') iconClass = 'fa-circle-exclamation';
+        else if (type === 'info') iconClass = 'fa-circle-info';
+
+        toast.innerHTML = `
+            <div class="enterprise-toast-icon">
+                <i class="fa-solid ${iconClass}"></i>
+            </div>
+            <div class="enterprise-toast-content">${message}</div>
+            <button type="button" class="enterprise-toast-close" onclick="this.parentElement.remove()" title="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        `;
+
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(40px)';
+            setTimeout(() => {
+                if (toast.parentElement) toast.parentElement.removeChild(toast);
+            }, 200);
+        }, 3500);
     }
 </script>
 @endpush

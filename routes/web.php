@@ -48,6 +48,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/invoices/store', [InvoiceController::class, 'store'])->name('invoices.store');
     Route::get('/invoices/print/{id}', [InvoiceController::class, 'printInvoice'])->name('invoices.print');
     Route::post('/invoices/generate', [InvoiceController::class, 'invoiceGenerate'])->name('invoices.generate');
+    Route::post('/invoices/share/email', [InvoiceController::class, 'shareEmail'])->name('invoices.share.email');
+    Route::post('/invoices/share/whatsapp', [InvoiceController::class, 'shareWhatsapp'])->name('invoices.share.whatsapp');
+    Route::get('/invoices/share/details', [InvoiceController::class, 'getShareDetails'])->name('invoices.share.details');
 
 
     // Customer Purchase Orders Routes
