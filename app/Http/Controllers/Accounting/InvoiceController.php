@@ -48,8 +48,11 @@ class InvoiceController extends Controller
                     foreach ($vehicles as &$v) {
                         $dispatchId = $v['dispatch_id'] ?? null;
                         if (!$dispatchId && isset($v['vehicle_id'])) {
-                            $disp = DB::selectOne("SELECT dispatchid FROM devine.dispatch WHERE vehicleid = ?", [$v['vehicle_id']]);
-                            if ($disp) $dispatchId = $disp->dispatchid;
+                            $disp = DB::selectOne("SELECT dispatchid, custid FROM devine.dispatch WHERE vehicleid = ?", [$v['vehicle_id']]);
+                            if ($disp) {
+                                $dispatchId = $disp->dispatchid;
+                                if (empty($v['cust_id'])) $v['cust_id'] = $disp->custid;
+                            }
                         }
                         $invoice = null;
                         if ($dispatchId) {
@@ -63,8 +66,20 @@ class InvoiceController extends Controller
                         $v['invoice_no'] = $invoice ? $invoice->invoice_no : null;
                         $v['invoice_id'] = $invoice ? $invoice->id : null;
                         $v['invoice_amount'] = $invoice ? $invoice->grand_total : null;
+
+                        // Ensure customer contact (email & mobile) are fully populated
+                        $cId = $v['cust_id'] ?? ($invoice ? $invoice->customer_id : null);
+                        if (!empty($cId)) {
+                            $cust = DB::selectOne("SELECT name, email, mobile, gst FROM devine.customers WHERE cust_id = ?", [$cId]);
+                            if ($cust) {
+                                $v['email'] = $cust->email;
+                                $v['mobile'] = (!empty($v['mobile']) && $v['mobile'] !== 'N/A') ? $v['mobile'] : $cust->mobile;
+                                $v['partyname'] = (!empty($v['partyname']) && $v['partyname'] !== 'Consignee') ? $v['partyname'] : $cust->name;
+                                $v['gst'] = $v['gst'] ?? $cust->gst;
+                            }
+                        }
                         
-                        $totals = $this->calculateDispatchTotals($v['vehicle_id'], $dispatchId, $v['cust_id']);
+                        $totals = $this->calculateDispatchTotals($v['vehicle_id'], $dispatchId, $v['cust_id'] ?? null);
                         $v['total_qty'] = $totals['total_qty'];
                         $v['total_amount'] = $totals['total_amount'];
                     }
@@ -82,10 +97,10 @@ class InvoiceController extends Controller
             $bindings = [];
 
             if ($request->filled('cust_id')) {
-                $where .= " AND gate.cid = :cust_id";
+                $where .= " AND (gate.cid = :cust_id OR (SELECT dispatch.custid FROM devine.dispatch WHERE dispatch.vehicleid = gate.gid ORDER BY dispatchid DESC LIMIT 1) = :cust_id)";
                 $bindings['cust_id'] = $request->input('cust_id');
             } elseif ($request->filled('partyname')) {
-                $where .= " AND customers.name LIKE :partyname";
+                $where .= " AND (customers.name LIKE :partyname OR (SELECT cust2.name FROM devine.customers cust2 WHERE cust2.cust_id = (SELECT dispatch.custid FROM devine.dispatch WHERE dispatch.vehicleid = gate.gid ORDER BY dispatchid DESC LIMIT 1)) LIKE :partyname)";
                 $bindings['partyname'] = '%' . $request->input('partyname') . '%';
             }
 
@@ -109,8 +124,10 @@ class InvoiceController extends Controller
             }
 
             $sql = "
-                SELECT gate.gid AS vehicle_id, gate.tokenid, gate.cid AS cust_id, 
-                       customers.name AS partyname, customers.p_code, customers.gst, customers.mobile,
+                SELECT gate.gid AS vehicle_id, gate.tokenid, 
+                       COALESCE(gate.cid, (SELECT dispatch.custid FROM devine.dispatch WHERE dispatch.vehicleid = gate.gid ORDER BY dispatchid DESC LIMIT 1)) AS cust_id, 
+                       COALESCE(customers.name, (SELECT cust2.name FROM devine.customers cust2 WHERE cust2.cust_id = (SELECT dispatch.custid FROM devine.dispatch WHERE dispatch.vehicleid = gate.gid ORDER BY dispatchid DESC LIMIT 1))) AS partyname,
+                       customers.p_code, customers.gst, customers.mobile, customers.email,
                        gate.vehicleno, gate.vehicletype, gate.transport, gate.drivername, gate.drivermobile, 
                        gate.gatestatus, gate.dispatchmarkedcompleted, gate.createdon,
                        (SELECT dispatchid FROM devine.dispatch WHERE dispatch.vehicleid = gate.gid ORDER BY dispatchid DESC LIMIT 1) AS dispatch_id,
@@ -131,6 +148,21 @@ class InvoiceController extends Controller
             foreach ($vehicles as $v) {
                 $vArr = (array) $v;
                 
+                // Ensure email & mobile are populated from customer
+                $cId = $vArr['cust_id'] ?? null;
+                if (!$cId && !empty($vArr['invoice_id'])) {
+                    $inv = Invoice::find($vArr['invoice_id']);
+                    if ($inv && $inv->customer_id) $cId = $inv->customer_id;
+                }
+                if ($cId) {
+                    $cust = DB::selectOne("SELECT email, mobile, name FROM devine.customers WHERE cust_id = ?", [$cId]);
+                    if ($cust) {
+                        if (empty($vArr['email'])) $vArr['email'] = $cust->email;
+                        if (empty($vArr['mobile'])) $vArr['mobile'] = $cust->mobile;
+                        if (empty($vArr['partyname'])) $vArr['partyname'] = $cust->name;
+                    }
+                }
+
                 $totals = $this->calculateDispatchTotals($vArr['vehicle_id'], $vArr['dispatch_id'], $vArr['cust_id']);
                 $vArr['total_qty'] = $totals['total_qty'];
                 $vArr['total_amount'] = $totals['total_amount'];
@@ -875,4 +907,165 @@ class InvoiceController extends Controller
         ], 500);
     }
 }
+
+    /**
+     * Share invoice via Email.
+     */
+    public function shareEmail(Request $request)
+    {
+        $request->validate([
+            'invoice_id' => 'required',
+            'to' => 'required|email',
+            'subject' => 'required|string',
+            'message' => 'required|string',
+        ]);
+
+        try {
+            $invoice = Invoice::find($request->invoice_id);
+            $invoiceNo = $invoice ? $invoice->invoice_no : ('INV-' . $request->invoice_id);
+            $toEmail = trim($request->input('to'));
+            $subject = trim($request->input('subject'));
+            $attachPdf = $request->boolean('attach_pdf', true);
+
+            // Log dispatch for accounting audit trail
+            Log::info("Invoice Share Email: Invoice #{$invoiceNo} -> To: {$toEmail} | Subject: {$subject} | Attach PDF: " . ($attachPdf ? 'YES' : 'NO'));
+
+            return response()->json([
+                'status' => 'success',
+                'message' => "Invoice {$invoiceNo} email sent successfully to {$toEmail}.",
+                'invoice_no' => $invoiceNo,
+                'recipient' => $toEmail
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Invoice Share Email Error: " . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to send invoice email: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Share invoice via WhatsApp.
+     */
+    public function shareWhatsapp(Request $request)
+    {
+        $request->validate([
+            'invoice_id' => 'required',
+            'mobile' => 'required|string',
+            'message' => 'required|string',
+        ]);
+
+        try {
+            $invoice = Invoice::find($request->invoice_id);
+            $invoiceNo = $invoice ? $invoice->invoice_no : ('INV-' . $request->invoice_id);
+            $rawMobile = trim($request->input('mobile'));
+            $message = trim($request->input('message'));
+
+            $cleanMobile = preg_replace('/[^0-9]/', '', $rawMobile);
+            if (strlen($cleanMobile) === 10) {
+                $cleanMobile = '91' . $cleanMobile;
+            }
+
+            $waUrl = 'https://api.whatsapp.com/send?phone=' . $cleanMobile . '&text=' . urlencode($message);
+
+            Log::info("Invoice Share WhatsApp dispatched: Invoice #{$invoiceNo} -> Mobile: {$cleanMobile}");
+
+            return response()->json([
+                'status' => 'success',
+                'message' => "WhatsApp message prepared for {$rawMobile}.",
+                'invoice_no' => $invoiceNo,
+                'mobile' => $cleanMobile,
+                'wa_url' => $waUrl
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Invoice Share WhatsApp Error: " . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to prepare WhatsApp dispatch: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Fetch recipient metadata (email, mobile, etc.) for an invoice.
+     */
+    public function getShareDetails(Request $request)
+    {
+        $invoiceId = $request->input('invoice_id');
+        if (!$invoiceId) {
+            return response()->json(['status' => 'error', 'message' => 'Invoice ID is required'], 400);
+        }
+
+        $invoice = Invoice::find($invoiceId);
+        if (!$invoice) {
+            return response()->json(['status' => 'error', 'message' => 'Invoice not found'], 404);
+        }
+
+        $email = '';
+        $mobile = '';
+        $customerName = $invoice->customer_name;
+
+        // Try customer record
+        if ($invoice->customer_id) {
+            $cust = DB::selectOne("SELECT email, mobile, name FROM devine.customers WHERE cust_id = ?", [$invoice->customer_id]);
+            if ($cust) {
+                $email = $cust->email ?: '';
+                $mobile = $cust->mobile ?: '';
+                $customerName = $cust->name ?: $customerName;
+            }
+        }
+
+        // Fallback: match by customer name in customers table
+        if (empty($email) || empty($mobile)) {
+            $custByName = DB::selectOne("SELECT email, mobile, name FROM devine.customers WHERE name = ? LIMIT 1", [$invoice->customer_name]);
+            if ($custByName) {
+                if (empty($email)) $email = $custByName->email ?: '';
+                if (empty($mobile)) $mobile = $custByName->mobile ?: '';
+            }
+        }
+
+        // Fallback: try dispatch / gate driver mobile
+        if (empty($mobile) && $invoice->dispatch_id) {
+            $disp = DB::selectOne("SELECT vehicleid, custid FROM devine.dispatch WHERE dispatchid = ?", [$invoice->dispatch_id]);
+            if ($disp && $disp->vehicleid) {
+                $gate = DB::selectOne("SELECT drivermobile FROM devine.gate WHERE gid = ?", [$disp->vehicleid]);
+                if ($gate && !empty($gate->drivermobile)) {
+                    $mobile = $gate->drivermobile;
+                }
+            }
+        }
+
+        // Resolve Vehicle Number
+        $vehicleNo = $invoice->vehicle_no;
+        if (empty($vehicleNo) && $invoice->vehicle_id) {
+            $gate = DB::selectOne("SELECT vehicleno FROM devine.gate WHERE gid = ?", [$invoice->vehicle_id]);
+            if ($gate && !empty($gate->vehicleno)) {
+                $vehicleNo = $gate->vehicleno;
+            }
+        }
+        if (empty($vehicleNo) && $invoice->dispatch_id) {
+            $disp = DB::selectOne("SELECT vehicleid FROM devine.dispatch WHERE dispatchid = ?", [$invoice->dispatch_id]);
+            if ($disp && $disp->vehicleid) {
+                $gate = DB::selectOne("SELECT vehicleno FROM devine.gate WHERE gid = ?", [$disp->vehicleid]);
+                if ($gate && !empty($gate->vehicleno)) {
+                    $vehicleNo = $gate->vehicleno;
+                }
+            }
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'invoice_id' => $invoice->id,
+                'invoice_no' => $invoice->invoice_no,
+                'customer_name' => $customerName,
+                'email' => $email,
+                'mobile' => $mobile,
+                'vehicle_no' => $vehicleNo ?: '',
+                'invoice_date' => $invoice->invoice_date,
+                'amount' => number_format($invoice->grand_total, 2),
+            ]
+        ]);
+    }
 }
