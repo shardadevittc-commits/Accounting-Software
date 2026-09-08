@@ -315,7 +315,7 @@
                                     <span style="color: var(--text-primary); font-weight: 500;">Discount (if applicable):</span>
                                 </div>
                                 <div class="col-6 text-end">
-                                    <input type="number" step="0.01" class="form-control form-control-sm text-end font-monospace voucher-input" style="width: 130px; display: inline-block;" id="v_discount" value="0.00" onchange="recalculateVoucherSummary()">
+                                    <input type="number" step="0.01" class="form-control form-control-sm text-end font-monospace voucher-input" style="width: 130px; display: inline-block; background-color: #ffffff !important;" id="v_discount" value="0.00" onchange="recalculateVoucherSummary()">
                                 </div>
                             </div>
                             <div class="d-flex align-items-center justify-content-between mb-3 border-top pt-2" style="border-color: var(--border-color) !important;">
@@ -345,7 +345,7 @@
                                     <span style="color: var(--text-primary); font-weight: 500;">Freight / Transport (₹):</span>
                                 </div>
                                 <div class="col-6 text-end">
-                                    <input type="number" step="0.01" class="form-control form-control-sm text-end font-monospace voucher-input" style="width: 130px; display: inline-block;" id="v_freight" name="freight_charges" value="0.00" onchange="recalculateVoucherSummary()">
+                                    <input type="number" step="0.01" class="form-control form-control-sm text-end font-monospace voucher-input" style="width: 130px; display: inline-block; background-color: #ffffff !important;" id="v_freight" name="freight_charges" value="0.00" onchange="recalculateVoucherSummary()">
                                 </div>
                             </div>
                             <div class="row g-2 mb-3 align-items-center">
@@ -353,7 +353,7 @@
                                     <span style="color: var(--text-primary); font-weight: 500;">Other Charges (₹):</span>
                                 </div>
                                 <div class="col-6 text-end">
-                                    <input type="number" step="0.01" class="form-control form-control-sm text-end font-monospace voucher-input" style="width: 130px; display: inline-block;" id="v_other_charges" name="other_charges" value="0.00" onchange="recalculateVoucherSummary()">
+                                    <input type="number" step="0.01" class="form-control form-control-sm text-end font-monospace voucher-input" style="width: 130px; display: inline-block; background-color: #ffffff !important;" id="v_other_charges" name="other_charges" value="0.00" onchange="recalculateVoucherSummary()">
                                 </div>
                             </div>
 
