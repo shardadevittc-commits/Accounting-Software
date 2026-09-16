@@ -4,6 +4,141 @@
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('assets/css/accounting_dashboard.css') }}">
+<style>
+/* Compact & Sleek Delivery Terms Selector */
+.delivery-terms-control {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    max-width: 360px;
+    width: 100%;
+}
+
+.delivery-radio-card {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 10px;
+    height: 31px;
+    border-radius: 6px;
+    border: 1.5px solid var(--border-color, #e2e8f0);
+    background-color: #ffffff;
+    color: var(--text-primary, #334155);
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease-in-out;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    margin-bottom: 0;
+}
+
+.delivery-radio-card:hover {
+    border-color: #94a3b8;
+    background-color: #f8fafc;
+}
+
+.delivery-radio-dot {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    border: 2px solid #94a3b8;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.delivery-radio-dot::after {
+    content: '';
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background-color: transparent;
+    transition: all 0.15s ease;
+}
+
+.term-title {
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 0.2px;
+    line-height: 1;
+}
+
+.term-sub {
+    font-size: 0.70rem;
+    color: #64748b;
+    font-weight: 400;
+    line-height: 1;
+}
+
+.term-icon {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    transition: color 0.15s ease, transform 0.15s ease;
+}
+
+/* Checked State - EX (EX-Works) */
+.delivery-radio-input:checked + .delivery-radio-card.opt-ex {
+    border-color: #2563eb !important;
+    background: linear-gradient(145deg, #eff6ff, #f8faff) !important;
+    color: #1e40af !important;
+    box-shadow: 0 0 0 1px #2563eb, 0 1px 3px rgba(37, 99, 235, 0.15) !important;
+}
+
+.delivery-radio-input:checked + .delivery-radio-card.opt-ex .delivery-radio-dot {
+    border-color: #2563eb !important;
+    background-color: #2563eb !important;
+}
+
+.delivery-radio-input:checked + .delivery-radio-card.opt-ex .delivery-radio-dot::after {
+    background-color: #ffffff !important;
+}
+
+.delivery-radio-input:checked + .delivery-radio-card.opt-ex .term-title {
+    color: #1d4ed8 !important;
+}
+
+.delivery-radio-input:checked + .delivery-radio-card.opt-ex .term-sub {
+    color: #3b82f6 !important;
+}
+
+.delivery-radio-input:checked + .delivery-radio-card.opt-ex .term-icon {
+    color: #2563eb !important;
+    transform: scale(1.05);
+}
+
+/* Checked State - FOR (Destination) */
+.delivery-radio-input:checked + .delivery-radio-card.opt-for {
+    border-color: #0891b2 !important;
+    background: linear-gradient(145deg, #ecfeff, #f6feff) !important;
+    color: #0e7490 !important;
+    box-shadow: 0 0 0 1px #0891b2, 0 1px 3px rgba(8, 145, 178, 0.15) !important;
+}
+
+.delivery-radio-input:checked + .delivery-radio-card.opt-for .delivery-radio-dot {
+    border-color: #0891b2 !important;
+    background-color: #0891b2 !important;
+}
+
+.delivery-radio-input:checked + .delivery-radio-card.opt-for .delivery-radio-dot::after {
+    background-color: #ffffff !important;
+}
+
+.delivery-radio-input:checked + .delivery-radio-card.opt-for .term-title {
+    color: #0e7490 !important;
+}
+
+.delivery-radio-input:checked + .delivery-radio-card.opt-for .term-sub {
+    color: #06b6d4 !important;
+}
+
+.delivery-radio-input:checked + .delivery-radio-card.opt-for .term-icon {
+    color: #0891b2 !important;
+    transform: scale(1.05);
+}
+</style>
 @endpush
 
 @section('content')
@@ -251,11 +386,33 @@
                     </div>
                 </div>
 
-                <!-- Section: Transport Info -->
+                <!-- Section: Transport Info & Delivery Terms -->
                 <div class="row g-3 mb-4">
-                    <div class="col-md-12">
+                    <div class="col-md-7">
                         <label class="form-label fs-8 fw-bold" style="color: var(--text-primary);">TRANSPORT NAME / CARRIER</label>
                         <input type="text" class="form-control voucher-input" id="v_transport_name" name="transport_name" placeholder="Transport / Carrier Name">
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label fs-8 fw-bold d-block" style="color: var(--text-primary);">
+                            DELIVERY TERMS <span class="text-danger">*</span>
+                        </label>
+                        <div class="delivery-terms-control">
+                            <input type="radio" class="delivery-radio-input d-none" name="delivery_type" id="dt_ex" value="EX" checked onchange="recalculateVoucherSummary()">
+                            <label class="delivery-radio-card opt-ex" for="dt_ex">
+                                <span class="delivery-radio-dot"></span>
+                                <span class="term-title">EX</span>
+                                <span class="term-sub">(EX-Works)</span>
+                                <i class="fa-solid fa-warehouse term-icon ms-auto"></i>
+                            </label>
+
+                            <input type="radio" class="delivery-radio-input d-none" name="delivery_type" id="dt_for" value="FOR" onchange="recalculateVoucherSummary()">
+                            <label class="delivery-radio-card opt-for" for="dt_for">
+                                <span class="delivery-radio-dot"></span>
+                                <span class="term-title">FOR</span>
+                                <span class="term-sub">(Destination)</span>
+                                <i class="fa-solid fa-truck-fast term-icon ms-auto"></i>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
@@ -270,23 +427,19 @@
                 </div>
 
                 <div class="table-responsive mb-4">
-                    <table class="table table-bordered align-middle enterprise-table mb-0" id="voucherItemsTable" style="min-width: 1650px;">
+                    <table class="table table-bordered align-middle enterprise-table mb-0" id="voucherItemsTable">
                         <thead>
                             <tr class="text-center" style="background: var(--table-th-bg, #f1f5f9);">
                                 <th style="width: 45px;">#</th>
-                                <th style="min-width: 240px; text-align: left;">Product Name</th>
-                                <th style="min-width: 130px;">Grade</th>
-                                <th style="min-width: 95px;">Size</th>
-                                <th style="min-width: 110px;">HSN</th>
-                                <th style="min-width: 140px;">Qty (Tons)</th>
-                                <th style="min-width: 90px;">Unit</th>
-                                <th style="min-width: 140px;">Rate (₹)</th>
-                                <th style="min-width: 140px;">Taxable Amt</th>
-                                <th style="min-width: 95px;">GST %</th>
-                                <th style="min-width: 115px;">CGST</th>
-                                <th style="min-width: 115px;">SGST</th>
-                                <th style="min-width: 115px;">IGST</th>
-                                <th style="min-width: 150px;">Total Amt</th>
+                                <th style="min-width: 250px; text-align: left;">Product Name</th>
+                                <th style="min-width: 120px;">Grade</th>
+                                <th style="min-width: 100px;">Size</th>
+                                <th style="min-width: 105px;">HSN</th>
+                                <th style="min-width: 130px;">Qty (Tons)</th>
+                                <th style="min-width: 80px;">Unit</th>
+                                <th style="min-width: 130px;">Rate (₹)</th>
+                                <th style="min-width: 140px;">Amount (₹)</th>
+                                <th style="min-width: 85px;">GST %</th>
                                 <th style="width: 45px;"></th>
                             </tr>
                         </thead>
@@ -299,71 +452,199 @@
                 <!-- Section: Calculations and Summaries -->
                 <div class="row g-4 mt-2">
                     <div class="col-lg-6">
+                        <!-- Additional Charges & Deductions Input Panel -->
+                        <div class="p-3 rounded-3 border mb-3" style="background-color: var(--main-body-bg); border-color: var(--border-color);">
+                            <div class="voucher-form-title mb-3 border-0 pb-0" style="font-size: 0.95rem;">
+                                <i class="fa-solid fa-coins text-warning"></i> Additional Charges & Deductions
+                            </div>
+
+                            <!-- Freight Amount (INR) -->
+                            <div class="row g-2 mb-2 align-items-center">
+                                <div class="col-6">
+                                    <label class="form-label fs-8 fw-bold mb-0" style="color: var(--text-primary);">
+                                        Freight Amount (₹):
+                                    </label>
+                                    <div class="fs-9 text-muted">Transport / Cartage charges</div>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace voucher-input" style="width: 140px; display: inline-block; background-color: #ffffff !important;" id="v_freight" name="freight_amount" value="0.00" oninput="recalculateVoucherSummary()">
+                                </div>
+                            </div>
+
+                            <!-- Insurance (INR) -->
+                            <div class="row g-2 mb-2 align-items-center border-top pt-2" style="border-color: var(--border-color) !important;">
+                                <div class="col-6">
+                                    <label class="form-label fs-8 fw-bold mb-0" style="color: var(--text-primary);">
+                                        Insurance (₹):
+                                    </label>
+                                    <div class="fs-9 text-muted" id="lblInsuranceBreakup">Additional transit insurance</div>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace voucher-input" style="width: 140px; display: inline-block; background-color: #ffffff !important;" id="v_insurance" name="insurance_amount" value="0.00" oninput="recalculateVoucherSummary()">
+                                </div>
+                            </div>
+
+                            <!-- Labour Charges / TON (INR) -->
+                            <div class="row g-2 mb-2 align-items-center border-top pt-2" style="border-color: var(--border-color) !important;">
+                                <div class="col-6">
+                                    <label class="form-label fs-8 fw-bold mb-0" style="color: var(--text-primary);">
+                                        Labour Charges / TON (₹):
+                                    </label>
+                                    <div class="fs-9 text-primary fw-semibold" id="lblLabourBreakup">Rate/Ton × Total Tons</div>
+                                    <input type="hidden" name="labour_total_amount" id="v_labour_total" value="0.00">
+                                </div>
+                                <div class="col-6 text-end">
+                                    <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace voucher-input" style="width: 140px; display: inline-block; background-color: #ffffff !important;" id="v_labour_rate" name="labour_charges_per_ton" value="0.00" oninput="recalculateVoucherSummary()" placeholder="₹/Ton">
+                                </div>
+                            </div>
+
+                            <!-- TCS (INR) -->
+                            <div class="row g-2 mb-2 align-items-center border-top pt-2" style="border-color: var(--border-color) !important;">
+                                <div class="col-6">
+                                    <label class="form-label fs-8 fw-bold mb-0" style="color: var(--text-primary);">
+                                        TCS Amount (₹):
+                                    </label>
+                                    <div class="fs-9 text-muted">Tax Collected at Source (Added)</div>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace voucher-input" style="width: 140px; display: inline-block; background-color: #ffffff !important;" id="v_tcs" name="tcs_amount" value="0.00" oninput="recalculateVoucherSummary()">
+                                </div>
+                            </div>
+
+                            <!-- TDS (INR) - Deduction -->
+                            <div class="row g-2 mb-2 align-items-center border-top pt-2" style="border-color: var(--border-color) !important;">
+                                <div class="col-6">
+                                    <label class="form-label fs-8 fw-bold mb-0 text-danger">
+                                        TDS Deduction (₹):
+                                    </label>
+                                    <div class="fs-9 text-danger fw-semibold">Tax Deducted at Source (Deducted)</div>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace voucher-input border-danger text-danger fw-bold" style="width: 140px; display: inline-block; background-color: #ffffff !important;" id="v_tds" name="tds_amount" value="0.00" oninput="recalculateVoucherSummary()">
+                                </div>
+                            </div>
+
+                            <!-- Other Charges (INR) -->
+                            <div class="row g-2 align-items-center border-top pt-2" style="border-color: var(--border-color) !important;">
+                                <div class="col-6">
+                                    <label class="form-label fs-8 fw-bold mb-0" style="color: var(--text-primary);">
+                                        Other Charges (₹):
+                                    </label>
+                                    <div class="fs-9 text-muted">Handling / Packing charges</div>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <input type="number" step="0.01" class="form-control form-control-sm text-end font-monospace voucher-input" style="width: 140px; display: inline-block; background-color: #ffffff !important;" id="v_other_charges" name="other_charges" value="0.00" oninput="recalculateVoucherSummary()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Remarks / Accounting Notes -->
                         <label class="form-label fs-8 fw-bold" style="color: var(--text-primary);">REMARKS / ACCOUNTING NOTES</label>
-                        <textarea class="form-control voucher-input" id="v_remarks" name="remarks" rows="3" placeholder="Specify dispatch terms, payment schedule or delivery notes..." style="height: auto; min-height: 85px;"></textarea>
+                        <textarea class="form-control voucher-input" id="v_remarks" name="remarks" rows="2" placeholder="Specify dispatch terms, payment schedule or delivery notes..." style="height: auto; min-height: 65px;"></textarea>
                     </div>
                     
                     <div class="col-lg-6">
                         <div class="p-4 rounded-3 border" style="background-color: var(--main-body-bg); border-color: var(--border-color);">
                             
+                            <!-- Sub Total (Product Value) -->
                             <div class="d-flex align-items-center justify-content-between mb-2">
-                                <span style="color: var(--text-primary); font-weight: 500;">Sub Total:</span>
+                                <span style="color: var(--text-primary); font-weight: 500;">Sub Total (Product Value):</span>
                                 <span class="fw-bold font-monospace" style="color: var(--text-primary);" id="lblSubTotal">₹0.00</span>
                             </div>
-                            <div class="row g-2 mb-3 align-items-center">
-                                <div class="col-6">
-                                    <span style="color: var(--text-primary); font-weight: 500;">Discount (if applicable):</span>
+
+                            <!-- Cash Discount (%) -->
+                            <div class="row g-2 mb-2 align-items-center">
+                                <div class="col-7 d-flex align-items-center gap-1">
+                                    <span style="color: var(--text-primary); font-weight: 500;">Cash Discount:</span>
+                                    <div class="d-inline-flex align-items-center">
+                                        <input type="number" step="0.01" min="0" max="100" class="form-control form-control-sm text-end font-monospace voucher-input" style="width: 70px; display: inline-block; background-color: #ffffff !important; padding: 2px 6px;" id="v_discount_percent" name="discount_percent" value="0.00" oninput="recalculateVoucherSummary()">
+                                        <span class="ms-1 fs-8 text-muted fw-bold">%</span>
+                                    </div>
                                 </div>
-                                <div class="col-6 text-end">
-                                    <input type="number" step="0.01" class="form-control form-control-sm text-end font-monospace voucher-input" style="width: 130px; display: inline-block; background-color: #ffffff !important;" id="v_discount" value="0.00" onchange="recalculateVoucherSummary()">
+                                <div class="col-5 text-end">
+                                    <span class="fw-bold font-monospace text-danger" id="lblDiscountDisplay">-₹0.00</span>
+                                    <input type="hidden" name="discount_amount" id="valDiscountAmount" value="0.00">
                                 </div>
                             </div>
-                            <div class="d-flex align-items-center justify-content-between mb-3 border-top pt-2" style="border-color: var(--border-color) !important;">
-                                <span class="fw-bold" style="color: var(--text-primary);">Taxable Amount:</span>
-                                <span class="fw-bold fs-6 font-monospace" style="color: var(--text-primary);" id="lblTaxableAmount">₹0.00</span>
+
+                            <!-- Labour Charges (+) -->
+                            <div class="d-flex align-items-center justify-content-between mb-1" id="rowLabourTaxable">
+                                <span class="fs-8" style="color: var(--text-muted);">Labour Charges (+):</span>
+                                <span class="fw-bold font-monospace fs-8" style="color: var(--text-primary);" id="lblLabourDisplay">₹0.00</span>
+                            </div>
+
+                            <!-- Freight Amount (+) -->
+                            <div class="d-flex align-items-center justify-content-between mb-1" id="rowFreightTaxable">
+                                <span class="fs-8" style="color: var(--text-muted);">Freight Amount (+):</span>
+                                <span class="fw-bold font-monospace fs-8" style="color: var(--text-primary);" id="lblFreightDisplay">₹0.00</span>
+                            </div>
+
+                            <!-- Insurance (+) -->
+                            <div class="d-flex align-items-center justify-content-between mb-1" id="rowInsuranceTaxable">
+                                <span class="fs-8" style="color: var(--text-muted);">Insurance (+):</span>
+                                <span class="fw-bold font-monospace fs-8" style="color: var(--text-primary);" id="lblInsuranceDisplay">₹0.00</span>
+                            </div>
+
+                            <!-- Other Charges (+) -->
+                            <div class="d-flex align-items-center justify-content-between mb-2" id="rowOtherTaxable">
+                                <span class="fs-8" style="color: var(--text-muted);">Other Charges (+):</span>
+                                <span class="fw-bold font-monospace fs-8" style="color: var(--text-primary);" id="lblOtherDisplay">₹0.00</span>
+                            </div>
+
+                            <!-- Total Taxable Amount (After Charges) -->
+                            <div class="d-flex align-items-center justify-content-between mb-2 border-top pt-2" style="border-color: var(--border-color) !important; background: rgba(37, 99, 235, 0.05); padding: 5px 8px; border-radius: 6px;">
+                                <span class="fw-bold" style="color: var(--text-primary);">Taxable / Total after charges:</span>
+                                <span class="fw-bold fs-6 font-monospace text-primary" id="lblTaxableAmount">₹0.00</span>
                                 <input type="hidden" name="taxable_amount" id="valTaxableAmount">
                             </div>
 
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <span class="fs-8" style="color: var(--text-muted);">CGST Amount:</span>
+                            <!-- CGST / SGST / IGST -->
+                            <div class="d-flex align-items-center justify-content-between mb-1" id="rowCgst">
+                                <span class="fs-8" style="color: var(--text-muted);">CGST Amount (9%):</span>
                                 <span class="fw-bold font-monospace fs-8" style="color: var(--text-primary);" id="lblCgstAmount">₹0.00</span>
                                 <input type="hidden" name="cgst_amount" id="valCgstAmount">
                             </div>
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <span class="fs-8" style="color: var(--text-muted);">SGST Amount:</span>
+                            <div class="d-flex align-items-center justify-content-between mb-1" id="rowSgst">
+                                <span class="fs-8" style="color: var(--text-muted);">SGST Amount (9%):</span>
                                 <span class="fw-bold font-monospace fs-8" style="color: var(--text-primary);" id="lblSgstAmount">₹0.00</span>
                                 <input type="hidden" name="sgst_amount" id="valSgstAmount">
                             </div>
-                            <div class="d-flex align-items-center justify-content-between mb-3">
-                                <span class="fs-8" style="color: var(--text-muted);">IGST Amount:</span>
+                            <div class="d-flex align-items-center justify-content-between mb-2" id="rowIgst">
+                                <span class="fs-8" style="color: var(--text-muted);">IGST Amount (18%):</span>
                                 <span class="fw-bold font-monospace fs-8" style="color: var(--text-primary);" id="lblIgstAmount">₹0.00</span>
                                 <input type="hidden" name="igst_amount" id="valIgstAmount">
                             </div>
 
-                            <div class="row g-2 mb-2 align-items-center border-top pt-2" style="border-color: var(--border-color) !important;">
-                                <div class="col-6">
-                                    <span style="color: var(--text-primary); font-weight: 500;">Freight / Transport (₹):</span>
-                                </div>
-                                <div class="col-6 text-end">
-                                    <input type="number" step="0.01" class="form-control form-control-sm text-end font-monospace voucher-input" style="width: 130px; display: inline-block; background-color: #ffffff !important;" id="v_freight" name="freight_charges" value="0.00" onchange="recalculateVoucherSummary()">
-                                </div>
-                            </div>
-                            <div class="row g-2 mb-3 align-items-center">
-                                <div class="col-6">
-                                    <span style="color: var(--text-primary); font-weight: 500;">Other Charges (₹):</span>
-                                </div>
-                                <div class="col-6 text-end">
-                                    <input type="number" step="0.01" class="form-control form-control-sm text-end font-monospace voucher-input" style="width: 130px; display: inline-block; background-color: #ffffff !important;" id="v_other_charges" name="other_charges" value="0.00" onchange="recalculateVoucherSummary()">
-                                </div>
+                            <!-- TCS (+) -->
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <span class="fs-8" style="color: var(--text-muted);">TCS (+):</span>
+                                <span class="fw-bold font-monospace fs-8" style="color: var(--text-primary);" id="lblTcsDisplay">₹0.00</span>
                             </div>
 
+                            <!-- TDS (-) -->
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <span class="fs-8 text-danger fw-semibold">TDS Deduction (−):</span>
+                                <span class="fw-bold font-monospace fs-8 text-danger" id="lblTdsDisplay">-₹0.00</span>
+                            </div>
+
+                            <!-- Round Off -->
                             <div class="d-flex align-items-center justify-content-between mb-2 border-top pt-2" style="border-color: var(--border-color) !important;">
                                 <span class="fs-8" style="color: var(--text-muted);">Round Off:</span>
                                 <span class="fw-bold font-monospace fs-8" style="color: var(--text-primary);" id="lblRoundOff">₹0.00</span>
                             </div>
 
+                            <!-- Delivery Terms -->
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="fs-8 fw-semibold" style="color: var(--text-muted);">Delivery Terms:</span>
+                                <span class="badge bg-primary-subtle text-primary border border-primary font-monospace px-2 py-1" id="lblDeliveryTermsBadge">EX (EX-Works)</span>
+                            </div>
+
+                            <!-- GRAND TOTAL -->
                             <div class="d-flex align-items-center justify-content-between border-top pt-3 mt-2" style="border-color: var(--border-color) !important;">
-                                <span class="fw-bold fs-5" style="color: var(--text-primary);">GRAND TOTAL:</span>
+                                <div>
+                                    <span class="fw-bold fs-5 d-block" style="color: var(--text-primary);">GRAND TOTAL:</span>
+                                    <small class="text-muted fs-8">Net Payable Amount</small>
+                                </div>
                                 <span class="fw-bold fs-3 font-monospace text-success" id="lblGrandTotal">₹0.00</span>
                                 <input type="hidden" name="grand_total" id="valGrandTotal">
                             </div>
@@ -524,10 +805,9 @@
                             <th style="width: 70px;">Size</th>
                             <th style="width: 75px;">HSN</th>
                             <th class="text-end" style="width: 105px;">Weight (Tons)</th>
-                            <th class="text-end" style="width: 100px;">Rate (₹)</th>
-                            <th class="text-end" style="width: 120px;">Taxable Amt</th>
-                            <th style="width: 65px;">GST %</th>
-                            <th class="text-end" style="width: 125px;">Total Amt (₹)</th>
+                            <th class="text-end" style="width: 120px;">Rate (₹)</th>
+                            <th class="text-end" style="width: 130px;">Amount (₹)</th>
+                            <th style="width: 75px;">GST %</th>
                         </tr>
                     </thead>
                     <tbody id="pvItemsTableBody">
@@ -540,7 +820,6 @@
                             <th class="text-end">-</th>
                             <th class="text-end font-monospace" id="pvFootTotalTaxable">₹0.00</th>
                             <th>-</th>
-                            <th class="text-end font-monospace" id="pvFootTotalAmount">₹0.00</th>
                         </tr>
                     </tfoot>
                 </table>
@@ -659,27 +938,66 @@
                 </div>
                 <div class="p-3 rounded-3 font-monospace mb-3" style="background-color: var(--main-body-bg); border: 1px solid var(--border-color);">
                     <div class="d-flex justify-content-between py-1 border-bottom" style="border-color: var(--border-color) !important;">
-                        <span class="fs-8 text-muted">Taxable Amount:</span>
-                        <span class="fw-bold" id="cTaxableAmt">₹0.00</span>
+                        <span class="fs-8 text-muted">Delivery Terms:</span>
+                        <span class="fw-bold text-primary font-monospace" id="cDeliveryTerms">EX</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-1 border-bottom" style="border-color: var(--border-color) !important;">
+                        <span class="fs-8 text-muted">Goods Subtotal:</span>
+                        <span class="fw-bold font-monospace" id="cGoodsSubtotal">₹0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-1 border-bottom" style="border-color: var(--border-color) !important;" id="cDiscountRow">
+                        <span class="fs-8 text-danger">Cash Discount (−):</span>
+                        <span class="fw-bold text-danger font-monospace" id="cDiscountAmt">-₹0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-1 border-bottom" style="border-color: var(--border-color) !important;" id="cLabourRow">
+                        <span class="fs-8 text-muted">Labour Charges (+):</span>
+                        <span class="fw-bold font-monospace" id="cLabourAmt">₹0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-1 border-bottom" style="border-color: var(--border-color) !important;" id="cFreightRow">
+                        <span class="fs-8 text-muted">Freight Amount (+):</span>
+                        <span class="fw-bold font-monospace" id="cFreightAmt">₹0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-1 border-bottom" style="border-color: var(--border-color) !important;" id="cInsuranceRow">
+                        <span class="fs-8 text-muted">Insurance (+):</span>
+                        <span class="fw-bold font-monospace" id="cInsuranceAmt">₹0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-1 border-bottom" style="border-color: var(--border-color) !important;" id="cOtherRow">
+                        <span class="fs-8 text-muted">Other Charges (+):</span>
+                        <span class="fw-bold font-monospace" id="cOtherAmt">₹0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-1 border-bottom bg-light-subtle px-1" style="border-color: var(--border-color) !important;">
+                        <span class="fs-8 fw-bold">Taxable / Total after charges:</span>
+                        <span class="fw-bold text-dark font-monospace" id="cTaxableAmt">₹0.00</span>
                     </div>
                     <div class="d-flex justify-content-between py-1 border-bottom" style="border-color: var(--border-color) !important;" id="cCgstRow">
                         <span class="fs-8 text-muted">CGST Total:</span>
-                        <span class="fw-bold" id="cCgstAmt">₹0.00</span>
+                        <span class="fw-bold font-monospace" id="cCgstAmt">₹0.00</span>
                     </div>
                     <div class="d-flex justify-content-between py-1 border-bottom" style="border-color: var(--border-color) !important;" id="cSgstRow">
                         <span class="fs-8 text-muted">SGST Total:</span>
-                        <span class="fw-bold" id="cSgstAmt">₹0.00</span>
+                        <span class="fw-bold font-monospace" id="cSgstAmt">₹0.00</span>
                     </div>
                     <div class="d-flex justify-content-between py-1 border-bottom d-none" style="border-color: var(--border-color) !important;" id="cIgstRow">
                         <span class="fs-8 text-muted">IGST Total:</span>
-                        <span class="fw-bold" id="cIgstAmt">₹0.00</span>
+                        <span class="fw-bold font-monospace" id="cIgstAmt">₹0.00</span>
                     </div>
-                    <div class="d-flex justify-content-between py-1 border-bottom" style="border-color: var(--border-color) !important;">
-                        <span class="fs-8 text-muted">Freight & Other:</span>
-                        <span class="fw-bold" id="cChargesAmt">₹0.00</span>
+                    <div class="d-flex justify-content-between py-1 border-bottom" style="border-color: var(--border-color) !important;" id="cTcsRow">
+                        <span class="fs-8 text-muted">TCS (+):</span>
+                        <span class="fw-bold font-monospace" id="cTcsAmt">₹0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-1 border-bottom text-danger" style="border-color: var(--border-color) !important;" id="cTdsRow">
+                        <span class="fs-8 fw-semibold">TDS Deduction (−):</span>
+                        <span class="fw-bold font-monospace text-danger" id="cTdsAmt">-₹0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-1 border-bottom" style="border-color: var(--border-color) !important;" id="cRoundOffRow">
+                        <span class="fs-8 text-muted">Round Off:</span>
+                        <span class="fw-bold font-monospace" id="cRoundOffAmt">₹0.00</span>
                     </div>
                     <div class="d-flex justify-content-between pt-2">
-                        <span class="fw-bold text-dark">GRAND TOTAL:</span>
+                        <div>
+                            <span class="fw-bold text-dark d-block">GRAND TOTAL:</span>
+                            <small class="text-muted fs-9">Net Payable Amount</small>
+                        </div>
                         <span class="fw-bold text-success fs-5" id="cGrandTotal">₹0.00</span>
                     </div>
                 </div>
@@ -1263,20 +1581,16 @@
                     let html = '';
                     let totalWeight = 0;
                     let subtotal = 0;
-                    let totalItemsAmount = 0;
 
                     if (d.items && d.items.length > 0) {
                         d.items.forEach((it, idx) => {
                             const weight = parseFloat(it.actual_weight_tons || it.planned_weight_tons || 0);
                             const rate = parseFloat(it.rate || 0);
-                            const taxable = weight * rate;
+                            const amount = weight * rate;
                             const gstPct = parseFloat(it.gst_rate || 18);
-                            const itemGst = taxable * (gstPct / 100);
-                            const itemTotal = taxable + itemGst;
 
                             totalWeight += weight;
-                            subtotal += taxable;
-                            totalItemsAmount += itemTotal;
+                            subtotal += amount;
 
                             html += `
                                 <tr>
@@ -1287,48 +1601,58 @@
                                     <td class="font-monospace">${it.hsn || '7214'}</td>
                                     <td class="fw-bold text-end font-monospace">${weight.toFixed(3)}</td>
                                     <td class="text-end font-monospace">${fmt(rate)}</td>
-                                    <td class="fw-bold text-end font-monospace" style="color: var(--text-primary);">${fmt(taxable)}</td>
+                                    <td class="fw-bold text-end font-monospace text-primary">${fmt(amount)}</td>
                                     <td class="text-center font-monospace"><span class="badge bg-light text-dark border px-2">${gstPct}%</span></td>
-                                    <td class="fw-bold text-end font-monospace text-primary">${fmt(itemTotal)}</td>
                                 </tr>`;
                         });
                     } else {
-                        html = `<tr><td colspan="10" class="text-center py-3 text-muted">No items recorded in ERP dispatch!</td></tr>`;
+                        html = `<tr><td colspan="9" class="text-center py-3 text-muted">No items recorded in ERP dispatch!</td></tr>`;
                     }
                     body.innerHTML = html;
 
                     // Footer totals
                     document.getElementById('pvFootTotalWeight').innerText = totalWeight.toFixed(3) + ' Tons';
                     document.getElementById('pvFootTotalTaxable').innerText = fmt(subtotal);
-                    document.getElementById('pvFootTotalAmount').innerText = fmt(totalItemsAmount);
 
                     // Accounting Calculations (Screenshot 2 Breakdown)
-                    const cashdiscount = d.dispatch ? parseFloat(d.dispatch.cashdiscount || 0) : 0;
-                    const labor = d.dispatch ? parseFloat(d.dispatch.laborchr || 0) : 0;
+                    const discPct = d.dispatch ? parseFloat(d.dispatch.cashdiscount || 0) : 0;
+                    const cashdiscount = Math.round((subtotal * discPct) / 100 * 100) / 100;
+                    const laborRate = d.dispatch ? parseFloat(d.dispatch.labour_rate || d.dispatch.laborchr || 0) : 0;
+                    const labor = Math.round(laborRate * totalWeight * 100) / 100;
                     const other = d.dispatch ? parseFloat(d.dispatch.otherchr || 0) : 0;
-                    const afterCharges = Math.max(0, subtotal - cashdiscount) + labor + other;
+                    const freight = d.dispatch ? parseFloat(d.dispatch.freight || 0) : 0;
+                    const insurance = d.dispatch ? parseFloat(d.dispatch.insurance || 0) : 0;
+
+                    const afterCharges = Math.max(0, subtotal - cashdiscount) + labor + other + freight + insurance;
 
                     let cgst = 0, sgst = 0, igst = 0;
                     if (isInterstate) {
-                        igst = afterCharges * 0.18;
+                        igst = Math.round(afterCharges * 0.18 * 100) / 100;
                         cgst = 0;
                         sgst = 0;
+                        if (document.getElementById('pvIgstRow')) document.getElementById('pvIgstRow').classList.remove('d-none');
+                        if (document.getElementById('pvCgstRow')) document.getElementById('pvCgstRow').classList.add('d-none');
+                        if (document.getElementById('pvSgstRow')) document.getElementById('pvSgstRow').classList.add('d-none');
                     } else {
-                        cgst = afterCharges * 0.09;
-                        sgst = afterCharges * 0.09;
+                        cgst = Math.round(afterCharges * 0.09 * 100) / 100;
+                        sgst = cgst;
                         igst = 0;
+                        if (document.getElementById('pvIgstRow')) document.getElementById('pvIgstRow').classList.add('d-none');
+                        if (document.getElementById('pvCgstRow')) document.getElementById('pvCgstRow').classList.remove('d-none');
+                        if (document.getElementById('pvSgstRow')) document.getElementById('pvSgstRow').classList.remove('d-none');
                     }
                     const totalGst = cgst + sgst + igst;
 
                     const tcs = d.dispatch ? parseFloat(d.dispatch.tcs || 0) : 0;
-                    const rawGrandTotal = afterCharges + totalGst + tcs;
+                    const tds = d.dispatch ? parseFloat(d.dispatch.tds || 0) : 0;
+                    const rawGrandTotal = afterCharges + totalGst + tcs - tds;
                     const grandTotal = Math.round(rawGrandTotal);
-                    const roundOff = grandTotal - rawGrandTotal;
+                    const roundOff = Math.round((grandTotal - rawGrandTotal) * 100) / 100;
 
                     // Populate breakdown elements
                     document.getElementById('pvCalcSubtotal').innerText = fmt(subtotal);
-                    document.getElementById('pvCalcDiscount').innerText = fmt(cashdiscount);
-                    document.getElementById('pvCalcLabor').innerText = fmt(labor);
+                    document.getElementById('pvCalcDiscount').innerText = (cashdiscount > 0 ? '-' : '') + fmt(cashdiscount) + (discPct > 0 ? ` (${discPct}%)` : '');
+                    document.getElementById('pvCalcLabor').innerText = fmt(labor) + (laborRate > 0 ? ` (${totalWeight.toFixed(3)}T × ₹${laborRate.toFixed(2)}/T)` : '');
                     document.getElementById('pvCalcOther').innerText = fmt(other);
                     document.getElementById('pvCalcAfterCharges').innerText = fmt(afterCharges);
                     document.getElementById('pvCalcCgst').innerText = fmt(cgst);
@@ -1400,7 +1724,46 @@
                     document.getElementById('v_customer_address').value = d.customer ? `${d.customer.address || ''}, ${d.customer.city || ''}, ${d.customer.state || ''}`.trim(', ') : '';
 
                     document.getElementById('v_transport_name').value = d.vehicle ? (d.vehicle.transport || '') : '';
-                    document.getElementById('v_other_charges').value = d.dispatch ? (d.dispatch.otherchr || 0.00).toFixed(2) : '0.00';
+                    const dsp = d.dispatch || {};
+
+                    // 1. Freight Amount
+                    document.getElementById('v_freight').value = (parseFloat(dsp.freight || 0)).toFixed(2);
+
+                    // 2. Insurance Amount (autofill if exists, otherwise 0.00 for accountant input)
+                    const insVal = parseFloat(dsp.insurance || 0);
+                    document.getElementById('v_insurance').value = insVal.toFixed(2);
+
+                    // 3. Labour Charges (autofill from ERP laborchr or labour_rate if exists)
+                    const labRate = parseFloat(dsp.labour_rate || dsp.laborchr || 0);
+                    document.getElementById('v_labour_rate').value = labRate.toFixed(2);
+
+                    // 4. TCS Amount
+                    const tcsVal = parseFloat(dsp.tcs || 0);
+                    document.getElementById('v_tcs').value = tcsVal.toFixed(2);
+
+                    // 5. TDS Amount (autofill if exists, otherwise 0.00 for accountant input)
+                    const tdsVal = parseFloat(dsp.tds || 0);
+                    document.getElementById('v_tds').value = tdsVal.toFixed(2);
+
+                    // 6. Cash Discount (%)
+                    const discVal = parseFloat(dsp.cashdiscount || 0);
+                    if (document.getElementById('v_discount_percent')) {
+                        document.getElementById('v_discount_percent').value = discVal.toFixed(2);
+                    }
+
+                    // 7. Other Charges
+                    const otherVal = parseFloat(dsp.otherchr || 0);
+                    document.getElementById('v_other_charges').value = otherVal.toFixed(2);
+
+                    // 8. Delivery Terms (autofill from ERP or default to EX)
+                    const dt = (dsp.delivery_type || 'EX').toUpperCase();
+                    if (dt === 'FOR') {
+                        if (document.getElementById('dt_for')) document.getElementById('dt_for').checked = true;
+                        if (document.getElementById('dt_ex')) document.getElementById('dt_ex').checked = false;
+                    } else {
+                        if (document.getElementById('dt_ex')) document.getElementById('dt_ex').checked = true;
+                        if (document.getElementById('dt_for')) document.getElementById('dt_for').checked = false;
+                    }
 
                     const buyerGst = d.customer ? d.customer.gst : '';
                     handleGstinChange(buyerGst);
@@ -1489,16 +1852,12 @@
             <td>
                 <input type="number" step="0.01" class="form-control voucher-input text-end font-monospace item-rate" name="items[${idx}][rate]" value="${rate.toFixed(2)}" onchange="rowCalc(this)">
             </td>
-            <td class="text-end font-monospace fw-bold" style="color: var(--text-primary);"><span class="item-taxable">₹0.00</span></td>
-            <td>
-                <input type="number" step="0.5" class="form-control voucher-input text-center font-monospace item-gst-rate" name="items[${idx}][gst_rate]" value="${gstRate}" onchange="rowCalc(this)">
-            </td>
-            <td class="text-end font-monospace" style="color: var(--text-primary); font-size: 0.9rem;"><span class="item-cgst">₹0.00</span></td>
-            <td class="text-end font-monospace" style="color: var(--text-primary); font-size: 0.9rem;"><span class="item-sgst">₹0.00</span></td>
-            <td class="text-end font-monospace" style="color: var(--text-primary); font-size: 0.9rem;"><span class="item-igst">₹0.00</span></td>
             <td class="text-end font-monospace fw-bold text-primary" style="font-size: 0.95rem;">
-                <span class="item-total">₹0.00</span>
+                <span class="item-amount">₹0.00</span>
                 <input type="hidden" name="items[${idx}][amount]" class="item-amount-val">
+            </td>
+            <td>
+                <input type="number" step="0.5" class="form-control voucher-input text-center font-monospace item-gst-rate" name="items[${idx}][gst_rate]" value="${gstRate}" onchange="recalculateVoucherSummary()">
             </td>
             <td class="text-center">
                 <button type="button" class="btn btn-sm btn-outline-danger p-1 border-0" onclick="removeVoucherRow(this)" title="Delete Row">
@@ -1518,7 +1877,7 @@
         const body = document.getElementById('voucherItemsBody');
         const rows = body.querySelectorAll('tr');
         if (rows.length === 0) {
-            body.innerHTML = `<tr><td colspan="15" class="text-center py-3 text-warning">No items. Click "+ Add Line Item" to add manual rows.</td></tr>`;
+            body.innerHTML = `<tr><td colspan="11" class="text-center py-3 text-warning">No items. Click "+ Add Line Item" to add manual rows.</td></tr>`;
         } else {
             rows.forEach((r, idx) => {
                 r.querySelector('td').innerText = idx + 1;
@@ -1545,11 +1904,7 @@
             document.getElementById('cSgstRow').classList.remove('d-none');
             document.getElementById('cIgstRow').classList.add('d-none');
         }
-        
-        const rows = document.querySelectorAll('.voucher-row');
-        rows.forEach(r => {
-            rowCalc(r.querySelector('.item-weight'));
-        });
+        recalculateVoucherSummary();
     }
 
     // Individual Row Math
@@ -1557,34 +1912,10 @@
         const row = input.closest('tr');
         const qty = parseFloat(row.querySelector('.item-weight').value) || 0;
         const rate = parseFloat(row.querySelector('.item-rate').value) || 0;
-        const gstPercent = parseFloat(row.querySelector('.item-gst-rate').value) || 0;
-        
-        const taxable = qty * rate;
-        row.querySelector('.item-taxable').innerText = '₹' + taxable.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const amount = qty * rate;
 
-        const gstin = document.getElementById('v_customer_gst').value || '';
-        const state = gstin.trim().substring(0, 2);
-        
-        let cgst = 0;
-        let sgst = 0;
-        let igst = 0;
-
-        if (gstin.trim().length >= 2 && state !== supplierStateCode) {
-            igst = (taxable * gstPercent) / 100;
-            row.querySelector('.item-cgst').innerText = '₹0.00';
-            row.querySelector('.item-sgst').innerText = '₹0.00';
-            row.querySelector('.item-igst').innerText = '₹' + igst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        } else {
-            cgst = (taxable * (gstPercent / 2)) / 100;
-            sgst = cgst;
-            row.querySelector('.item-cgst').innerText = '₹' + cgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            row.querySelector('.item-sgst').innerText = '₹' + sgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            row.querySelector('.item-igst').innerText = '₹0.00';
-        }
-
-        const rowTotal = taxable + cgst + sgst + igst;
-        row.querySelector('.item-total').innerText = '₹' + rowTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        row.querySelector('.item-amount-val').value = taxable.toFixed(2);
+        row.querySelector('.item-amount').innerText = '₹' + amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        row.querySelector('.item-amount-val').value = amount.toFixed(2);
 
         recalculateVoucherSummary();
     }
@@ -1592,9 +1923,8 @@
     // Recalculate voucher totals
     function recalculateVoucherSummary() {
         let subtotal = 0;
-        let cgstTotal = 0;
-        let sgstTotal = 0;
-        let igstTotal = 0;
+        let totalWeightTons = 0;
+        let maxGstRate = 18;
 
         const rows = document.querySelectorAll('.voucher-row');
         const gstin = document.getElementById('v_customer_gst').value || '';
@@ -1604,35 +1934,86 @@
         rows.forEach(row => {
             const qty = parseFloat(row.querySelector('.item-weight').value) || 0;
             const rate = parseFloat(row.querySelector('.item-rate').value) || 0;
-            const gstPercent = parseFloat(row.querySelector('.item-gst-rate').value) || 0;
-            const taxable = qty * rate;
+            const gstPercent = parseFloat(row.querySelector('.item-gst-rate') ? row.querySelector('.item-gst-rate').value : 18) || 18;
+            const amt = qty * rate;
 
-            subtotal += taxable;
-            if (isInterstate) {
-                igstTotal += (taxable * gstPercent) / 100;
-            } else {
-                const cgst = (taxable * (gstPercent / 2)) / 100;
-                cgstTotal += cgst;
-                sgstTotal += cgst;
-            }
+            totalWeightTons += qty;
+            if (gstPercent > 0) maxGstRate = gstPercent;
+            subtotal += amt;
         });
 
-        const discount = parseFloat(document.getElementById('v_discount').value) || 0;
-        const taxableAmount = Math.max(0, subtotal - discount);
-
-        if (discount > 0 && subtotal > 0) {
-            const ratio = taxableAmount / subtotal;
-            cgstTotal = cgstTotal * ratio;
-            sgstTotal = sgstTotal * ratio;
-            igstTotal = igstTotal * ratio;
+        // 1. Cash Discount (% of Subtotal)
+        const discountPercent = parseFloat(document.getElementById('v_discount_percent') ? document.getElementById('v_discount_percent').value : 0) || 0;
+        const discountAmount = Math.round((subtotal * discountPercent) / 100 * 100) / 100;
+        const valDisc = document.getElementById('valDiscountAmount');
+        if (valDisc) valDisc.value = discountAmount.toFixed(2);
+        const lblDisc = document.getElementById('lblDiscountDisplay');
+        if (lblDisc) {
+            lblDisc.innerText = (discountAmount > 0 ? '-' : '') + '₹' + discountAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
+        // 2. Additional Charges and Deductions
         const freight = parseFloat(document.getElementById('v_freight').value) || 0;
+        const insurance = parseFloat(document.getElementById('v_insurance').value) || 0;
+        const labourRate = parseFloat(document.getElementById('v_labour_rate').value) || 0;
+        const labourTotal = Math.round(labourRate * totalWeightTons * 100) / 100;
+        document.getElementById('v_labour_total').value = labourTotal.toFixed(2);
+
+        const tcs = parseFloat(document.getElementById('v_tcs').value) || 0;
+        const tds = parseFloat(document.getElementById('v_tds').value) || 0;
         const other = parseFloat(document.getElementById('v_other_charges').value) || 0;
 
-        const rawGrandTotal = taxableAmount + cgstTotal + sgstTotal + igstTotal + freight + other;
-        const roundedGrandTotal = Math.round(rawGrandTotal);
-        const roundOff = roundedGrandTotal - rawGrandTotal;
+        // Subtext helper badge for Labour
+        const lblLab = document.getElementById('lblLabourBreakup');
+        if (lblLab) {
+            if (labourRate > 0) {
+                lblLab.innerText = `${totalWeightTons.toFixed(3)} Tons × ₹${labourRate.toFixed(2)}/Ton = Base: ₹${labourTotal.toFixed(2)}`;
+            } else {
+                lblLab.innerText = `Total Weight: ${totalWeightTons.toFixed(3)} Tons (Rate/Ton × Tons)`;
+            }
+        }
+
+        // 3. Taxable Amount (Total after charges) = Subtotal - Discount + Labour + Freight + Insurance + Other
+        const taxableAmount = Math.max(0, subtotal - discountAmount) + labourTotal + freight + insurance + other;
+
+        // 4. GST Calculation on Taxable Amount
+        let cgstTotal = 0;
+        let sgstTotal = 0;
+        let igstTotal = 0;
+
+        if (isInterstate) {
+            igstTotal = Math.round((taxableAmount * maxGstRate) / 100 * 100) / 100;
+            document.getElementById('rowIgst').classList.remove('d-none');
+            document.getElementById('rowCgst').classList.add('d-none');
+            document.getElementById('rowSgst').classList.add('d-none');
+        } else {
+            cgstTotal = Math.round((taxableAmount * (maxGstRate / 2)) / 100 * 100) / 100;
+            sgstTotal = cgstTotal;
+            document.getElementById('rowIgst').classList.add('d-none');
+            document.getElementById('rowCgst').classList.remove('d-none');
+            document.getElementById('rowSgst').classList.remove('d-none');
+        }
+
+        // 5. Grand Total = Taxable Amount + GST + TCS - TDS
+        const totalGst = cgstTotal + sgstTotal + igstTotal;
+        const grossTotal = taxableAmount + totalGst + tcs;
+        const netBeforeRounding = grossTotal - tds;
+        const roundedGrandTotal = Math.round(netBeforeRounding);
+        const roundOff = Math.round((roundedGrandTotal - netBeforeRounding) * 100) / 100;
+
+        // Delivery Terms badge update
+        const isFor = document.getElementById('dt_for') ? document.getElementById('dt_for').checked : false;
+        const deliveryType = isFor ? 'FOR' : 'EX';
+        const lblDt = document.getElementById('lblDeliveryTermsBadge');
+        if (lblDt) {
+            if (deliveryType === 'FOR') {
+                lblDt.className = "badge bg-info-subtle text-info border border-info font-monospace px-2 py-1";
+                lblDt.innerText = "FOR (Freight on Road / Destination)";
+            } else {
+                lblDt.className = "badge bg-primary-subtle text-primary border border-primary font-monospace px-2 py-1";
+                lblDt.innerText = "EX (EX-Works / Origin)";
+            }
+        }
 
         document.getElementById('lblSubTotal').innerText = '₹' + subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         document.getElementById('lblTaxableAmount').innerText = '₹' + taxableAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -1647,7 +2028,15 @@
         document.getElementById('lblIgstAmount').innerText = '₹' + igstTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         document.getElementById('valIgstAmount').value = igstTotal.toFixed(2);
 
-        document.getElementById('lblRoundOff').innerText = '₹' + roundOff.toFixed(2);
+        document.getElementById('lblFreightDisplay').innerText = '₹' + freight.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('lblInsuranceDisplay').innerText = '₹' + insurance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('lblLabourDisplay').innerText = '₹' + labourTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('lblOtherDisplay').innerText = '₹' + other.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        document.getElementById('lblTcsDisplay').innerText = '₹' + tcs.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('lblTdsDisplay').innerText = '-₹' + tds.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        document.getElementById('lblRoundOff').innerText = (roundOff >= 0 ? '+' : '') + '₹' + roundOff.toFixed(2);
         document.getElementById('lblGrandTotal').innerText = '₹' + roundedGrandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         document.getElementById('valGrandTotal').value = roundedGrandTotal.toFixed(2);
     }
@@ -1722,16 +2111,47 @@
 
         document.getElementById('cInvoiceNo').innerText = invoiceNo.trim();
         document.getElementById('cBuyerName').innerText = buyerName;
+        if (document.getElementById('cGoodsSubtotal')) {
+            document.getElementById('cGoodsSubtotal').innerText = document.getElementById('lblSubTotal').innerText;
+        }
         document.getElementById('cTaxableAmt').innerText = document.getElementById('lblTaxableAmount').innerText;
         document.getElementById('cGrandTotal').innerText = document.getElementById('lblGrandTotal').innerText;
+
+        const isFor = document.getElementById('dt_for') ? document.getElementById('dt_for').checked : false;
+        const deliveryType = isFor ? 'FOR' : 'EX';
+        const cDeliveryTerms = document.getElementById('cDeliveryTerms');
+        if (cDeliveryTerms) cDeliveryTerms.innerText = deliveryType;
+
+        const discountAmt = parseFloat(document.getElementById('valDiscountAmount') ? document.getElementById('valDiscountAmount').value : 0) || 0;
+        const freight = parseFloat(document.getElementById('v_freight').value) || 0;
+        const insurance = parseFloat(document.getElementById('v_insurance').value) || 0;
+        const labourTotal = parseFloat(document.getElementById('v_labour_total').value) || 0;
+        const tcs = parseFloat(document.getElementById('v_tcs').value) || 0;
+        const tds = parseFloat(document.getElementById('v_tds').value) || 0;
+        const other = parseFloat(document.getElementById('v_other_charges').value) || 0;
+
+        const fmt = (v) => '₹' + v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        if (document.getElementById('cDiscountAmt')) document.getElementById('cDiscountAmt').innerText = '-₹' + discountAmt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (document.getElementById('cFreightAmt')) document.getElementById('cFreightAmt').innerText = fmt(freight);
+        if (document.getElementById('cInsuranceAmt')) document.getElementById('cInsuranceAmt').innerText = fmt(insurance);
+        if (document.getElementById('cLabourAmt')) document.getElementById('cLabourAmt').innerText = fmt(labourTotal);
+        if (document.getElementById('cTcsAmt')) document.getElementById('cTcsAmt').innerText = fmt(tcs);
+        if (document.getElementById('cTdsAmt')) document.getElementById('cTdsAmt').innerText = '-₹' + tds.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (document.getElementById('cOtherAmt')) document.getElementById('cOtherAmt').innerText = fmt(other);
+        if (document.getElementById('cRoundOffAmt')) document.getElementById('cRoundOffAmt').innerText = document.getElementById('lblRoundOff').innerText;
+
+        if (document.getElementById('cDiscountRow')) document.getElementById('cDiscountRow').style.display = discountAmt > 0 ? 'flex' : 'none';
+        if (document.getElementById('cFreightRow')) document.getElementById('cFreightRow').style.display = freight > 0 ? 'flex' : 'none';
+        if (document.getElementById('cInsuranceRow')) document.getElementById('cInsuranceRow').style.display = insurance > 0 ? 'flex' : 'none';
+        if (document.getElementById('cLabourRow')) document.getElementById('cLabourRow').style.display = labourTotal > 0 ? 'flex' : 'none';
+        if (document.getElementById('cTcsRow')) document.getElementById('cTcsRow').style.display = tcs > 0 ? 'flex' : 'none';
+        if (document.getElementById('cTdsRow')) document.getElementById('cTdsRow').style.display = tds > 0 ? 'flex' : 'none';
+        if (document.getElementById('cOtherRow')) document.getElementById('cOtherRow').style.display = other > 0 ? 'flex' : 'none';
 
         const gstin = document.getElementById('v_customer_gst').value || '';
         const state = gstin.trim().substring(0, 2);
         const isInterstate = (gstin.trim().length >= 2 && state !== supplierStateCode);
-
-        const freight = parseFloat(document.getElementById('v_freight').value) || 0;
-        const other = parseFloat(document.getElementById('v_other_charges').value) || 0;
-        document.getElementById('cChargesAmt').innerText = '₹' + (freight + other).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
         if (isInterstate) {
             document.getElementById('cIgstRow').classList.remove('d-none');
@@ -1996,8 +2416,8 @@
                         }
                     }
                 })
-                .catch(err => {
-                    console.log("Customer contact sync notice:", err);
+                .catch(() => {
+                    // Gracefully ignore sync notice failure
                 });
         }
 

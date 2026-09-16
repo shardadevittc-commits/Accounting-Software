@@ -11,15 +11,13 @@ use App\Http\Controllers\Admin\ThemeController;
 use App\Http\Controllers\Sales\SalesOrderController;
 use App\Http\Controllers\Purchase\PurchaseOrderController;
 use App\Http\Controllers\Accounting\InvoiceController;
+use App\Http\Controllers\Accounting\VoucherController;
+use App\Http\Controllers\Accounting\ReportController;
+use App\Http\Controllers\Accounting\LedgerReportController;
+use App\Http\Controllers\StorageController;
 
 // Public Storage File Route (Serves avatars & uploaded files reliably across Artisan Serve & Windows WAMP)
-Route::get('/storage/{path}', function ($path) {
-    $filePath = storage_path('app/public/' . $path);
-    if (!file_exists($filePath)) {
-        abort(404);
-    }
-    return response()->file($filePath);
-})->where('path', '.*')->name('storage.file');
+Route::get('/storage/{path}', [StorageController::class, 'show'])->where('path', '.*')->name('storage.file');
 
 // Auth Routes
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -52,6 +50,38 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/invoices/share/whatsapp', [InvoiceController::class, 'shareWhatsapp'])->name('invoices.share.whatsapp');
     Route::get('/invoices/share/details', [InvoiceController::class, 'getShareDetails'])->name('invoices.share.details');
 
+    // Accounting Vouchers Routes
+    Route::prefix('vouchers')->name('vouchers.')->group(function () {
+        Route::get('/', [VoucherController::class, 'index'])->name('index');
+        Route::get('/data', [VoucherController::class, 'data'])->name('data');
+        Route::get('/next-number', [VoucherController::class, 'getNextVoucherNumber'])->name('next-number');
+        Route::get('/parties', [VoucherController::class, 'getParties'])->name('parties');
+        Route::get('/party-bill', [VoucherController::class, 'getPartyBill'])->name('party-bill');
+        Route::get('/ledgers', [VoucherController::class, 'getLedgers'])->name('ledgers');
+        Route::post('/', [VoucherController::class, 'store'])->name('store');
+        Route::get('/{id}', [VoucherController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [VoucherController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [VoucherController::class, 'update'])->name('update');
+        Route::delete('/{id}', [VoucherController::class, 'destroy'])->name('destroy');
+        Route::get('/{id}/print', [VoucherController::class, 'print'])->name('print');
+    });
+    Route::get('/accounting/vouchers', function () {
+        return redirect()->route('vouchers.index');
+    });
+
+    // Accounting Reports Routes
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', [ReportController::class, 'index'])->name('index');
+        Route::get('/data', [ReportController::class, 'data'])->name('data');
+        Route::get('/export', [ReportController::class, 'export'])->name('export');
+    });
+
+    // Accounting General Ledger Statement Routes
+    Route::prefix('ledger')->name('ledger.')->group(function () {
+        Route::get('/', [LedgerReportController::class, 'index'])->name('index');
+        Route::get('/data', [LedgerReportController::class, 'data'])->name('data');
+        Route::get('/print', [LedgerReportController::class, 'print'])->name('print');
+    });
 
     // Customer Purchase Orders Routes
     Route::get('/purchase-order-list', [PurchaseOrderController::class, 'index'])->name('purchase.orders');

@@ -36,7 +36,7 @@ class RoleSeeder extends Seeder
             [
                 'name' => 'Sales',
                 'slug' => 'sales',
-                'description' => 'Focuses on customer management, sales invoicing, sales vouchers, and customer payment collections.',
+                'description' => 'Focuses on customer management, sales invoicing, and customer payment collections.',
                 'is_system' => true,
                 'status' => 'active',
                 'permissions' => Permission::whereIn('module', ['Dashboard', 'Customers', 'Products', 'Sales', 'Payments'])->pluck('id')->toArray(),
@@ -44,7 +44,7 @@ class RoleSeeder extends Seeder
             [
                 'name' => 'Purchase',
                 'slug' => 'purchase',
-                'description' => 'Manages vendor relationships, purchase bills, purchase vouchers, and stock inventory.',
+                'description' => 'Manages vendor relationships, purchase bills, and stock inventory.',
                 'is_system' => true,
                 'status' => 'active',
                 'permissions' => Permission::whereIn('module', ['Dashboard', 'Vendors', 'Products', 'Purchase', 'Payments'])->pluck('id')->toArray(),

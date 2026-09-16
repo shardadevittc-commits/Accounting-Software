@@ -504,9 +504,30 @@
             $totalGoodsAmount += $amt;
         }
 
+        // Delivery Terms & Additional Charges / Deductions
+        $deliveryType = strtoupper($invoice->delivery_type ?: 'EX');
+        $freight = floatval($invoice->freight_amount ?? ($invoice->freight_charges ?? ($dispatch->freight ?? 0)));
+        $insurance = floatval($invoice->insurance_amount ?? ($dispatch->insurance ?? 0));
+        $labourRate = floatval($invoice->labour_charges_per_ton ?? ($dispatch->laborchr ?? 0));
+        $labourTotal = floatval($invoice->labour_total_amount ?? 0);
+        if ($labourTotal <= 0 && $labourRate > 0 && $totalQty > 0) {
+            $labourTotal = round($labourRate * $totalQty, 2);
+        }
+        $otherCharges = floatval($invoice->other_charges ?? ($dispatch->otherchr ?? 0));
+        $discountPercent = floatval($invoice->discount_percent ?? ($dispatch->cashdiscount ?? 0));
+        $discountAmount = floatval($invoice->discount_amount ?? 0);
+        if ($discountAmount <= 0 && $discountPercent > 0 && $totalGoodsAmount > 0) {
+            $discountAmount = round(($totalGoodsAmount * $discountPercent) / 100, 2);
+        }
+
+        $tcs = floatval($invoice->tcs_amount ?? ($dispatch->tcs ?? 0));
+        $tds = floatval($invoice->tds_amount ?? 0);
+        $expenses = floatval($dispatch->expenses ?? 0);
+
+        // Taxable Base Calculation: Subtotal - Cash Discount + Labour + Freight + Insurance + Other Charges
         $taxableAmt = floatval($invoice->taxable_amount ?? 0);
         if ($taxableAmt <= 0) {
-            $taxableAmt = $totalGoodsAmount;
+            $taxableAmt = max(0, $totalGoodsAmount - $discountAmount) + $labourTotal + $freight + $insurance + $otherCharges;
         }
 
         // Taxes
@@ -537,16 +558,14 @@
 
         $totalGst = $cgstAmt + $sgstAmt + $igstAmt;
 
-        // Charges
-        $labour = floatval($invoice->freight_charges ?? ($dispatch->laborchr ?? 0));
-        $insurance = floatval($dispatch->insurance ?? 0);
-        $expenses = floatval($dispatch->expenses ?? 0);
-        $otherCharges = floatval($invoice->other_charges ?? ($dispatch->otherchr ?? 0));
+        // Exact Grand Total = Taxable + GST + TCS - TDS
+        $exactNet = $taxableAmt + $totalGst + $tcs - $tds;
 
         $grandTotal = floatval($invoice->grand_total ?? 0);
         if ($grandTotal <= 0) {
-            $grandTotal = round($taxableAmt + $totalGst + $labour + $insurance + $expenses + $otherCharges);
+            $grandTotal = round($exactNet);
         }
+        $roundOff = $grandTotal - $exactNet;
 
         $amountInWords = invoiceAmountInWords($grandTotal);
 
@@ -646,8 +665,11 @@
                             </td>
                         </tr>
                         <tr class="border-t">
-                            <td colspan="2" style="font-size: 10.5px; padding: 3px 6px;">
+                            <td style="font-size: 10.5px; padding: 3px 6px;" class="border-r">
                                 <strong>Transport Name :</strong> &nbsp;{{ $invoice->transport_name ?: ($dispatch->transname ?? '') }}
+                            </td>
+                            <td style="font-size: 10.5px; padding: 3px 6px;">
+                                <strong>Delivery Terms :</strong> &nbsp;<strong>{{ $deliveryType }}</strong>
                             </td>
                         </tr>
                     </table>
@@ -818,20 +840,42 @@
                     </table>
                 </td>
 
-                <!-- Column 2: Labour, Insurance & Total GST (25%) -->
+                <!-- Column 2: Additional Charges, Discounts & Total GST (25%) -->
                 <td class="summary-mid" style="width: 25%;">
                     <table class="inv-table" style="width: 100%;">
-                        <tr>
-                            <td style="padding: 1px 0;">Labour</td>
-                            <td style="text-align: right; font-weight: 600; padding: 1px 0;">{{ $labour > 0 ? number_format($labour, 2) : '' }}</td>
+                        @if($discountAmount > 0)
+                        <tr style="color: #b91c1c;">
+                            <td style="padding: 1px 0;">Cash Disc. {{ $discountPercent > 0 ? '(' . number_format($discountPercent, 2) . '%)' : '' }}</td>
+                            <td style="text-align: right; font-weight: 600; padding: 1px 0;">-{{ number_format($discountAmount, 2) }}</td>
                         </tr>
+                        @endif
+                        @if($labourTotal > 0)
+                        <tr>
+                            <td style="padding: 1px 0;">Labour {{ $labourRate > 0 ? '(' . number_format($labourRate, 2) . '/T)' : '' }}</td>
+                            <td style="text-align: right; font-weight: 600; padding: 1px 0;">{{ number_format($labourTotal, 2) }}</td>
+                        </tr>
+                        @endif
+                        @if($otherCharges > 0)
+                        <tr>
+                            <td style="padding: 1px 0;">Other Charges</td>
+                            <td style="text-align: right; font-weight: 600; padding: 1px 0;">{{ number_format($otherCharges, 2) }}</td>
+                        </tr>
+                        @endif
+                        @if($freight > 0)
+                        <tr>
+                            <td style="padding: 1px 0;">Freight Amount</td>
+                            <td style="text-align: right; font-weight: 600; padding: 1px 0;">{{ number_format($freight, 2) }}</td>
+                        </tr>
+                        @endif
+                        @if($insurance > 0)
                         <tr>
                             <td style="padding: 1px 0;">Insurance</td>
-                            <td style="text-align: right; font-weight: 600; padding: 1px 0;">{{ $insurance > 0 ? number_format($insurance, 2) : '' }}</td>
+                            <td style="text-align: right; font-weight: 600; padding: 1px 0;">{{ number_format($insurance, 2) }}</td>
                         </tr>
+                        @endif
                     </table>
 
-                    <div style="height: 42px;"></div>
+                    <div style="height: 16px;"></div>
 
                     <table class="inv-table border-t" style="width: 100%; margin-top: 2px;">
                         <tr style="font-weight: 800;">
@@ -841,33 +885,55 @@
                     </table>
                 </td>
 
-                <!-- Column 3: Expenses, Taxable Value, CGST, SGST, IGST, Others (32%) -->
+                <!-- Column 3: Taxable Value, CGST, SGST, IGST, TCS, TDS, Round Off (32%) -->
                 <td class="summary-right" style="width: 32%;">
                     <table class="inv-table" style="width: 100%;">
+                        @if($expenses > 0)
                         <tr>
                             <td style="padding: 1px 0;">Expenses</td>
-                            <td style="text-align: right; font-weight: 600; padding: 1px 0;">{{ $expenses > 0 ? number_format($expenses, 2) : '' }}</td>
+                            <td style="text-align: right; font-weight: 600; padding: 1px 0;">{{ number_format($expenses, 2) }}</td>
                         </tr>
+                        @endif
                         <tr>
                             <td style="padding: 1px 0; font-weight: 800;">Taxable Value</td>
                             <td style="text-align: right; font-weight: 800; padding: 1px 0;">{{ number_format($taxableAmt, 2) }}</td>
                         </tr>
+                        @if($cgstAmt > 0)
                         <tr>
                             <td style="padding: 1px 0;">C.GST @ {{ $cgstRate > 0 ? number_format($cgstRate, 2) . '%' : '' }}</td>
-                            <td style="text-align: right; font-weight: 600; padding: 1px 0;">{{ $cgstAmt > 0 ? number_format($cgstAmt, 2) : '' }}</td>
+                            <td style="text-align: right; font-weight: 600; padding: 1px 0;">{{ number_format($cgstAmt, 2) }}</td>
                         </tr>
+                        @endif
+                        @if($sgstAmt > 0)
                         <tr>
                             <td style="padding: 1px 0;">S.GST @ {{ $sgstRate > 0 ? number_format($sgstRate, 2) . '%' : '' }}</td>
-                            <td style="text-align: right; font-weight: 600; padding: 1px 0;">{{ $sgstAmt > 0 ? number_format($sgstAmt, 2) : '' }}</td>
+                            <td style="text-align: right; font-weight: 600; padding: 1px 0;">{{ number_format($sgstAmt, 2) }}</td>
                         </tr>
+                        @endif
+                        @if($igstAmt > 0)
                         <tr>
                             <td style="padding: 1px 0;">I.GST @ {{ $igstRate > 0 ? number_format($igstRate, 2) . '%' : '' }}</td>
-                            <td style="text-align: right; font-weight: 600; padding: 1px 0;">{{ $igstAmt > 0 ? number_format($igstAmt, 2) : '' }}</td>
+                            <td style="text-align: right; font-weight: 600; padding: 1px 0;">{{ number_format($igstAmt, 2) }}</td>
                         </tr>
+                        @endif
+                        @if($tcs > 0)
                         <tr>
-                            <td style="padding: 1px 0;">Others</td>
-                            <td style="text-align: right; font-weight: 600; padding: 1px 0;">{{ $otherCharges > 0 ? number_format($otherCharges, 2) : '' }}</td>
+                            <td style="padding: 1px 0;">TCS</td>
+                            <td style="text-align: right; font-weight: 600; padding: 1px 0;">{{ number_format($tcs, 2) }}</td>
                         </tr>
+                        @endif
+                        @if($tds > 0)
+                        <tr style="color: #b91c1c;">
+                            <td style="padding: 1px 0; font-weight: 700;">TDS Deduction (−)</td>
+                            <td style="text-align: right; font-weight: 700; padding: 1px 0;">-{{ number_format($tds, 2) }}</td>
+                        </tr>
+                        @endif
+                        @if(abs($roundOff) > 0.001)
+                        <tr>
+                            <td style="padding: 1px 0;">Round Off</td>
+                            <td style="text-align: right; font-weight: 600; padding: 1px 0;">{{ ($roundOff >= 0 ? '+' : '') . number_format($roundOff, 2) }}</td>
+                        </tr>
+                        @endif
                     </table>
                 </td>
             </tr>

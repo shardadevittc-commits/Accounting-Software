@@ -16,25 +16,22 @@
         <ul class="nav-links-container">
             <!-- 1. HOME -->
             <li class="nav-link-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                <a href="javascript:void(0)">
-                    <i class="fa-solid fa-chart-line"></i>
-                    <span>HOME</span>
-                    <i class="fa-solid fa-chevron-down nav-chevron-icon"></i>
-                </a>
-                <div class="topbar-dropdown">
-                    <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'text-white fw-bold' : '' }}"><i class="fa-solid fa-gauge-high"></i> Executive Overview</a>
-                    <a href="#"><i class="fa-solid fa-chart-area"></i> Revenue Analytics</a>
-                </div>
+                  <a href="{{ route('dashboard') }}">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span>HOME</span>
+                        <i class="fa-solid fa-chevron-down nav-chevron-icon"></i>
+                   </a>
             </li>
 
-            <!-- 2. TRANSACTIONS (Sales, Purchases, Expenses, Banking) -->
-            <li class="nav-link-item {{ request()->is('transactions*') || request()->routeIs('sales.*') || request()->routeIs('purchase.*') ? 'active' : '' }}">
+            <!-- 2. TRANSACTIONS (Sales, Purchases, Expenses, Banking, Vouchers) -->
+            <li class="nav-link-item {{ request()->is('transactions*') || request()->routeIs('sales.*') || request()->routeIs('purchase.*') || request()->routeIs('vouchers.*') ? 'active' : '' }}">
                 <a href="javascript:void(0)">
                     <i class="fa-solid fa-money-bill-transfer"></i>
                     <span>TRANSACTIONS</span>
                     <i class="fa-solid fa-chevron-down nav-chevron-icon"></i>
                 </a>
                 <div class="topbar-dropdown">
+                    <a href="{{ route('vouchers.index') }}" class="{{ request()->routeIs('vouchers.*') ? 'text-white fw-bold' : '' }}"><i class="fa-solid fa-file-invoice-dollar text-primary"></i> Accounting Vouchers</a>
                     @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['sales', 'accountant']) || auth()->user()->hasPermission('sales.view'))
                         <a href="{{ route('sales.dispatch-invoicing') }}" class="{{ request()->routeIs('sales.dispatch-invoicing') ? 'text-white fw-bold' : '' }}"><i class="fa-solid fa-truck-ramp-box text-info"></i> Dispatch Invoicing</a>
                         <a href="{{ route('sales.orders') }}" class="{{ request()->routeIs('sales.orders') ? 'text-white fw-bold' : '' }}"><i class="fa-solid fa-file-invoice-dollar text-success"></i> Sales Orders List</a>
@@ -42,71 +39,30 @@
                     @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['purchase', 'accountant']) || auth()->user()->hasPermission('purchase.view'))
                         <a href="{{ route('purchase.orders') }}" class="{{ request()->routeIs('purchase.*') ? 'text-white fw-bold' : '' }}"><i class="fa-solid fa-receipt text-warning"></i> Purchase Bills & Orders</a>
                     @endif
-                    @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole('accountant') || auth()->user()->hasPermission('expenses.view'))
-                        <a href="#"><i class="fa-solid fa-wallet text-danger"></i> Expense Claims</a>
-                    @endif
-                    @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['sales', 'accountant']) || auth()->user()->hasPermission('payments.view'))
-                        <a href="#"><i class="fa-solid fa-hand-holding-dollar text-primary"></i> Customer Payments</a>
-                    @endif
-                    @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole('accountant'))
-                        <a href="#"><i class="fa-solid fa-building-columns text-info"></i> Bank Transactions</a>
-                    @endif
                 </div>
             </li>
 
-            <!-- 3. ACCOUNTING (Ledger, Journal, Cash/Bank Book) -->
+            <!-- 3. ACCOUNTING (Ledger, Journal, Cash/Bank Book, Vouchers) -->
             @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole('accountant'))
-            <li class="nav-link-item {{ request()->is('accounting*') ? 'active' : '' }}">
+            <li class="nav-link-item {{ request()->is('accounting*') || request()->routeIs('vouchers.*') || request()->routeIs('ledger.*') ? 'active' : '' }}">
                 <a href="javascript:void(0)">
                     <i class="fa-solid fa-book-journal-whills"></i>
                     <span>ACCOUNTING</span>
                     <i class="fa-solid fa-chevron-down nav-chevron-icon"></i>
                 </a>
                 <div class="topbar-dropdown">
-                    <a href="#"><i class="fa-solid fa-sitemap"></i> Chart of Accounts</a>
-                    <a href="#"><i class="fa-solid fa-pen-to-square"></i> Journal Entries</a>
-                    <a href="#"><i class="fa-solid fa-book"></i> General Ledger</a>
-                    <a href="#"><i class="fa-solid fa-wallet"></i> Cash Book</a>
-                    <a href="#"><i class="fa-solid fa-building-columns"></i> Bank Book</a>
-                    <a href="#"><i class="fa-solid fa-scale-balanced"></i> Trial Balance</a>
+                    <a href="{{ route('vouchers.index') }}" class="{{ request()->routeIs('vouchers.*') ? 'text-white fw-bold' : '' }}"><i class="fa-solid fa-receipt text-primary"></i> Vouchers</a>
+                    <a href="{{ route('ledger.index') }}" class="{{ request()->routeIs('ledger.*') ? 'text-white fw-bold' : '' }}"><i class="fa-solid fa-book text-success"></i>Ledger</a>
                 </div>
             </li>
             @endif
 
-            <!-- 4. INVENTORY (Products, Warehouses, Stock) -->
-            <li class="nav-link-item {{ request()->is('inventory*') ? 'active' : '' }}">
-                <a href="javascript:void(0)">
-                    <i class="fa-solid fa-boxes-stacked"></i>
-                    <span>INVENTORY</span>
-                    <i class="fa-solid fa-chevron-down nav-chevron-icon"></i>
+            <!-- 5. REPORTS -->
+            <li class="nav-link-item {{ (request()->is('reports*') || request()->routeIs('reports.*')) ? 'active' : '' }}">
+                <a href="{{ route('reports.index') }}">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>REPORTS</span>
                 </a>
-                <div class="topbar-dropdown">
-                    <a href="#"><i class="fa-solid fa-box"></i> Products & Items</a>
-                    @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole('accountant') || auth()->user()->hasRole('purchase'))
-                        <a href="#"><i class="fa-solid fa-warehouse"></i> Warehouses</a>
-                        <a href="#"><i class="fa-solid fa-cubes"></i> Stock Summary</a>
-                        <a href="#"><i class="fa-solid fa-sliders"></i> Stock Adjustment</a>
-                        <a href="#"><i class="fa-solid fa-right-left"></i> Stock Transfer</a>
-                    @endif
-                </div>
-            </li>
-
-            <!-- 5. TAX & REPORTS (GST, P&L, Balance Sheet) -->
-            <li class="nav-link-item {{ request()->is('reports*') ? 'active' : '' }}">
-                <a href="javascript:void(0)">
-                    <i class="fa-solid fa-percent"></i>
-                    <span>TAX & REPORTS</span>
-                    <i class="fa-solid fa-chevron-down nav-chevron-icon"></i>
-                </a>
-                <div class="topbar-dropdown">
-                    @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole('accountant'))
-                        <a href="#"><i class="fa-solid fa-file-pdf text-purple"></i> GST Summary & Return (GSTR-3B)</a>
-                        <a href="#"><i class="fa-solid fa-file-contract text-success"></i> Profit & Loss Statement</a>
-                        <a href="#"><i class="fa-solid fa-scale-balanced text-primary"></i> Balance Sheet</a>
-                        <a href="#"><i class="fa-solid fa-arrows-split-up-and-left text-info"></i> Cash Flow Statement</a>
-                    @endif
-                    <a href="#"><i class="fa-solid fa-chart-line text-warning"></i> Sales & Purchase Reports</a>
-                </div>
             </li>
 
             <!-- 6. SETTINGS -->

@@ -27,9 +27,6 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Fetch pending vehicles awaiting invoice generation from ERP Divine API.
-     */
-    /**
      * Fetch pending vehicles awaiting invoice generation from ERP Divine API, with DB fallback.
      */
     public function getPendingVehicles(Request $request)
@@ -264,6 +261,30 @@ class InvoiceController extends Controller
                                 $it['gst_rate'] = $it['gst_rate'] ?? 18;
                             }
                         }
+
+                        if (isset($json['data']['dispatch'])) {
+                            $dId = $json['data']['dispatch']['dispatchid'] ?? $dispatchId;
+                            $vId = $json['data']['dispatch']['vehicleid'] ?? $vehicleId;
+                            $cId = $json['data']['dispatch']['custid'] ?? null;
+
+                            // Check delivery terms from saleorder
+                            if (!isset($json['data']['dispatch']['delivery_type']) && $cId) {
+                                $so = DB::selectOne("SELECT frtBasis FROM devine.saleorder WHERE cid = ? ORDER BY slid DESC LIMIT 1", [$cId]);
+                                if ($so && !empty($so->frtBasis)) {
+                                    $json['data']['dispatch']['delivery_type'] = strtoupper($so->frtBasis);
+                                }
+                            }
+
+                            // If invoice was already created or drafted, load saved charges
+                            $savedInv = Invoice::where('dispatch_id', $dId)->orWhere('vehicle_id', $vId)->first();
+                            if ($savedInv) {
+                                $json['data']['dispatch']['insurance'] = floatval($savedInv->insurance_amount);
+                                $json['data']['dispatch']['tds'] = floatval($savedInv->tds_amount);
+                                $json['data']['dispatch']['labour_rate'] = floatval($savedInv->labour_charges_per_ton);
+                                $json['data']['dispatch']['delivery_type'] = $savedInv->delivery_type;
+                            }
+                        }
+
                         return response()->json($json);
                     }
                 }
@@ -295,6 +316,11 @@ class InvoiceController extends Controller
                     dispatch.laborchr,
                     dispatch.otherchr,
                     dispatch.tcs,
+                    (SELECT frtBasis FROM devine.saleorder WHERE cid = dispatch.custid ORDER BY slid DESC LIMIT 1) AS frt_basis,
+                    (SELECT insurance_amount FROM account.invoices WHERE dispatch_id = dispatch.dispatchid OR vehicle_id = dispatch.vehicleid ORDER BY id DESC LIMIT 1) AS saved_insurance,
+                    (SELECT tds_amount FROM account.invoices WHERE dispatch_id = dispatch.dispatchid OR vehicle_id = dispatch.vehicleid ORDER BY id DESC LIMIT 1) AS saved_tds,
+                    (SELECT labour_charges_per_ton FROM account.invoices WHERE dispatch_id = dispatch.dispatchid OR vehicle_id = dispatch.vehicleid ORDER BY id DESC LIMIT 1) AS saved_labour_rate,
+                    (SELECT delivery_type FROM account.invoices WHERE dispatch_id = dispatch.dispatchid OR vehicle_id = dispatch.vehicleid ORDER BY id DESC LIMIT 1) AS saved_delivery_type,
                     dispatch.createdon,
                     dispatch.createdby,
                     customers.name AS customer_name,
@@ -414,6 +440,10 @@ class InvoiceController extends Controller
                             'laborchr'      => floatval($dispHeader->laborchr),
                             'otherchr'      => floatval($dispHeader->otherchr),
                             'tcs'           => floatval($dispHeader->tcs),
+                            'insurance'     => floatval($dispHeader->saved_insurance ?? 0),
+                            'tds'           => floatval($dispHeader->saved_tds ?? 0),
+                            'labour_rate'   => !empty($dispHeader->saved_labour_rate) ? floatval($dispHeader->saved_labour_rate) : floatval($dispHeader->laborchr),
+                            'delivery_type' => !empty($dispHeader->saved_delivery_type) ? $dispHeader->saved_delivery_type : (!empty($dispHeader->frt_basis) ? strtoupper($dispHeader->frt_basis) : 'EX'),
                             'createdon'     => $dispHeader->createdon,
                             'createdby'     => intval($dispHeader->createdby)
                         ],
@@ -657,6 +687,16 @@ class InvoiceController extends Controller
         $request->validate([
             'invoice_date' => 'required|date',
             'customer_name' => 'required|string',
+            'delivery_type' => 'nullable|in:EX,FOR',
+            'discount_percent' => 'nullable|numeric|min:0',
+            'discount_amount' => 'nullable|numeric|min:0',
+            'freight_amount' => 'nullable|numeric|min:0',
+            'insurance_amount' => 'nullable|numeric|min:0',
+            'labour_charges_per_ton' => 'nullable|numeric|min:0',
+            'labour_total_amount' => 'nullable|numeric|min:0',
+            'tcs_amount' => 'nullable|numeric|min:0',
+            'tds_amount' => 'nullable|numeric|min:0',
+            'other_charges' => 'nullable|numeric|min:0',
             'items' => 'required|array|min:1',
             'items.*.product_name' => 'required|string',
             'items.*.rate' => 'required|numeric',
@@ -694,6 +734,47 @@ class InvoiceController extends Controller
                 $invoiceNo = 'INV-' . $year . '-' . str_pad($nextSeq, 4, '0', STR_PAD_LEFT);
             }
 
+            $discountPercent = floatval($request->input('discount_percent', 0));
+            $discountAmount = floatval($request->input('discount_amount', 0));
+            $freight = floatval($request->input('freight_amount', $request->input('freight_charges', 0)));
+            $insurance = floatval($request->input('insurance_amount', 0));
+            $labourRate = floatval($request->input('labour_charges_per_ton', 0));
+            $labourTotal = floatval($request->input('labour_total_amount', 0));
+            $items = $request->input('items', []);
+            if ($labourTotal <= 0 && $labourRate > 0 && !empty($items)) {
+                $totalWeight = 0;
+                foreach ($items as $it) {
+                    $totalWeight += floatval($it['weight_tons'] ?? 0);
+                }
+                $labourTotal = round($labourRate * $totalWeight, 2);
+            }
+            $tcs = floatval($request->input('tcs_amount', 0));
+            $tds = floatval($request->input('tds_amount', 0));
+            $deliveryType = $request->input('delivery_type', 'EX');
+
+            $taxable = floatval($request->input('taxable_amount', 0));
+            $cgst = floatval($request->input('cgst_amount', 0));
+            $sgst = floatval($request->input('sgst_amount', 0));
+            $igst = floatval($request->input('igst_amount', 0));
+            $other = floatval($request->input('other_charges', 0));
+
+            // If taxable amount not provided or 0, compute properly: (subtotal - discount) + charges
+            if ($taxable <= 0) {
+                $subtotal = 0;
+                foreach ($items as $it) {
+                    $subtotal += floatval($it['amount'] ?? 0);
+                }
+                if ($discountAmount <= 0 && $discountPercent > 0) {
+                    $discountAmount = round(($subtotal * $discountPercent) / 100, 2);
+                }
+                $taxable = max(0, $subtotal - $discountAmount) + $labourTotal + $freight + $insurance + $other;
+            }
+
+            $grandTotal = floatval($request->input('grand_total', 0));
+            if ($grandTotal <= 0) {
+                $grandTotal = round($taxable + $cgst + $sgst + $igst + $tcs - $tds);
+            }
+
             $invoice = Invoice::create([
                 'invoice_no' => $invoiceNo,
                 'invoice_date' => $request->input('invoice_date'),
@@ -705,17 +786,25 @@ class InvoiceController extends Controller
                 'customer_address' => $request->input('customer_address'),
                 'vehicle_no' => $request->input('vehicle_no'),
                 'transport_name' => $request->input('transport_name'),
-                'taxable_amount' => $request->input('taxable_amount', 0),
+                'delivery_type' => in_array($deliveryType, ['EX', 'FOR']) ? $deliveryType : 'EX',
+                'taxable_amount' => $taxable,
+                'discount_percent' => $discountPercent,
+                'discount_amount' => $discountAmount,
                 'cgst_rate' => $request->input('cgst_rate', 9),
-                'cgst_amount' => $request->input('cgst_amount', 0),
+                'cgst_amount' => $cgst,
                 'sgst_rate' => $request->input('sgst_rate', 9),
-                'sgst_amount' => $request->input('sgst_amount', 0),
+                'sgst_amount' => $sgst,
                 'igst_rate' => $request->input('igst_rate', 0),
-                'igst_amount' => $request->input('igst_amount', 0),
-                'freight_charges' => $request->input('freight_charges', 0),
-                'other_charges' => $request->input('other_charges', 0),
-                'tcs_amount' => $request->input('tcs_amount', 0),
-                'grand_total' => $request->input('grand_total', 0),
+                'igst_amount' => $igst,
+                'freight_charges' => $freight,
+                'freight_amount' => $freight,
+                'insurance_amount' => $insurance,
+                'labour_charges_per_ton' => $labourRate,
+                'labour_total_amount' => $labourTotal,
+                'other_charges' => $other,
+                'tcs_amount' => $tcs,
+                'tds_amount' => $tds,
+                'grand_total' => $grandTotal,
                 'remarks' => $request->input('remarks'),
                 'created_by' => Auth::id(),
             ]);
@@ -780,6 +869,16 @@ class InvoiceController extends Controller
     $request->validate([
         'invoice_date' => 'required|date',
         'customer_name' => 'required|string',
+        'delivery_type' => 'nullable|in:EX,FOR',
+        'discount_percent' => 'nullable|numeric|min:0',
+        'discount_amount' => 'nullable|numeric|min:0',
+        'freight_amount' => 'nullable|numeric|min:0',
+        'insurance_amount' => 'nullable|numeric|min:0',
+        'labour_charges_per_ton' => 'nullable|numeric|min:0',
+        'labour_total_amount' => 'nullable|numeric|min:0',
+        'tcs_amount' => 'nullable|numeric|min:0',
+        'tds_amount' => 'nullable|numeric|min:0',
+        'other_charges' => 'nullable|numeric|min:0',
         'items' => 'required|array|min:1',
 
         'items.*.product_name' => 'required|string',
@@ -822,6 +921,69 @@ class InvoiceController extends Controller
             $invoiceNo = 'INV-' . $year . '-' . str_pad($nextSeq, 4, '0', STR_PAD_LEFT);
         }
 
+        $items = $request->items ?? $request->input('items', []);
+        $totalWeight = 0;
+        $itemsSubtotal = 0;
+        foreach ($items as $it) {
+            $qty = floatval($it['weight_tons'] ?? 0);
+            $rate = floatval($it['rate'] ?? 0);
+            $amt = floatval($it['amount'] ?? ($qty * $rate));
+            $totalWeight += $qty;
+            $itemsSubtotal += $amt;
+        }
+
+        $discountPercent = floatval($request->input('discount_percent', 0));
+        $discountAmount = floatval($request->input('discount_amount', 0));
+        if ($discountAmount <= 0 && $discountPercent > 0 && $itemsSubtotal > 0) {
+            $discountAmount = round(($itemsSubtotal * $discountPercent) / 100, 2);
+        }
+
+        $freight = floatval($request->input('freight_amount', $request->input('freight_charges', 0)));
+        $insurance = floatval($request->input('insurance_amount', 0));
+        $labourRate = floatval($request->input('labour_charges_per_ton', 0));
+        $labourTotal = floatval($request->input('labour_total_amount', 0));
+        if ($labourTotal <= 0 && $labourRate > 0 && $totalWeight > 0) {
+            $labourTotal = round($labourRate * $totalWeight, 2);
+        }
+
+        $tcs = floatval($request->input('tcs_amount', 0));
+        $tds = floatval($request->input('tds_amount', 0));
+        $other = floatval($request->other_charges ?? 0);
+        $deliveryType = $request->input('delivery_type', 'EX');
+
+        // Net Taxable Amount = Subtotal - Discount + Labour + Freight + Insurance + Other
+        $calculatedTaxable = max(0, $itemsSubtotal - $discountAmount) + $labourTotal + $freight + $insurance + $other;
+        $taxable = floatval($request->taxable_amount ?? 0);
+        if ($taxable <= 0) {
+            $taxable = $calculatedTaxable;
+        }
+
+        // Determine GST based on customer state vs supplier state (Punjab 03)
+        $customerGst = trim($request->customer_gst ?? '');
+        $isInterstate = (strlen($customerGst) >= 2 && substr($customerGst, 0, 2) !== '03');
+
+        $cgst = floatval($request->cgst_amount ?? 0);
+        $sgst = floatval($request->sgst_amount ?? 0);
+        $igst = floatval($request->igst_amount ?? 0);
+
+        if ($cgst <= 0 && $sgst <= 0 && $igst <= 0 && $taxable > 0) {
+            if ($isInterstate) {
+                $igst = round($taxable * 0.18, 2);
+                $cgst = 0;
+                $sgst = 0;
+            } else {
+                $cgst = round($taxable * 0.09, 2);
+                $sgst = round($taxable * 0.09, 2);
+                $igst = 0;
+            }
+        }
+
+        $grandTotal = floatval($request->grand_total ?? 0);
+        if ($grandTotal <= 0) {
+            $exactGrandTotal = $taxable + $cgst + $sgst + $igst + $tcs - $tds;
+            $grandTotal = round($exactGrandTotal);
+        }
+
         /*
         |--------------------------------------------------------------------------
         | 2. Create Invoice
@@ -841,24 +1003,32 @@ class InvoiceController extends Controller
 
             'vehicle_no' => $request->vehicle_no,
             'transport_name' => $request->transport_name,
+            'delivery_type' => in_array($deliveryType, ['EX', 'FOR']) ? $deliveryType : 'EX',
 
-            'taxable_amount' => $request->taxable_amount ?? 0,
+            'taxable_amount' => $taxable,
+            'discount_percent' => $discountPercent,
+            'discount_amount' => $discountAmount,
 
-            'cgst_rate' => $request->cgst_rate ?? 9,
-            'cgst_amount' => $request->cgst_amount ?? 0,
+            'cgst_rate' => $isInterstate ? 0 : 9,
+            'cgst_amount' => $cgst,
 
-            'sgst_rate' => $request->sgst_rate ?? 9,
-            'sgst_amount' => $request->sgst_amount ?? 0,
+            'sgst_rate' => $isInterstate ? 0 : 9,
+            'sgst_amount' => $sgst,
 
-            'igst_rate' => $request->igst_rate ?? 0,
-            'igst_amount' => $request->igst_amount ?? 0,
+            'igst_rate' => $isInterstate ? 18 : 0,
+            'igst_amount' => $igst,
 
-            'freight_charges' => $request->freight_charges ?? 0,
-            'other_charges' => $request->other_charges ?? 0,
+            'freight_charges' => $freight,
+            'freight_amount' => $freight,
+            'insurance_amount' => $insurance,
+            'labour_charges_per_ton' => $labourRate,
+            'labour_total_amount' => $labourTotal,
+            'other_charges' => $other,
 
-            'tcs_amount' => $request->tcs_amount ?? 0,
+            'tcs_amount' => $tcs,
+            'tds_amount' => $tds,
 
-            'grand_total' => $request->grand_total ?? 0,
+            'grand_total' => $grandTotal,
 
             'remarks' => $request->remarks,
 
