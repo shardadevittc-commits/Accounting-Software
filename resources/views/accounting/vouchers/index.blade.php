@@ -1750,47 +1750,47 @@
         if (feedback) {
             if (advanceAdj > 0 && pendingAmt > 0) {
                 feedback.innerHTML = `
-                    <div class="d-flex align-items-center flex-wrap gap-1 mt-1 fs-9">
-                        <span class="text-success fw-bold me-1">
+                    <div class="d-flex align-items-center flex-wrap gap-2 mt-2">
+                        <span class="text-success fw-bold me-1" style="font-size: 0.85rem;">
                             <i class="fa-solid fa-circle-check me-1"></i> Bill: <strong>${escapeHtml(val)}</strong>
                         </span>
-                        <span class="badge bg-light text-dark border">
+                        <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 0.82rem; font-weight: 600;">
                             Total: ₹${formatNumber(totalAmt, 2)}
                         </span>
-                        <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle fw-bold">
+                        <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle fw-bold px-2 py-1" style="font-size: 0.82rem;">
                             <i class="fa-solid fa-hand-holding-dollar me-1"></i> Advance: ₹${formatNumber(advanceAdj, 2)}
                         </span>
-                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-bold">
+                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-bold px-2 py-1" style="font-size: 0.82rem;">
                             <i class="fa-solid fa-clock-rotate-left me-1"></i> Pending: ₹${formatNumber(pendingAmt, 2)}
                         </span>
                     </div>
                 `;
             } else if (pendingAmt > 0) {
                 feedback.innerHTML = `
-                    <div class="d-flex align-items-center flex-wrap gap-1 mt-1 fs-9">
-                        <span class="text-success fw-bold me-1">
+                    <div class="d-flex align-items-center flex-wrap gap-2 mt-2">
+                        <span class="text-success fw-bold me-1" style="font-size: 0.85rem;">
                             <i class="fa-solid fa-circle-check me-1"></i> Bill: <strong>${escapeHtml(val)}</strong>
                         </span>
-                        <span class="badge bg-light text-dark border">
+                        <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 0.82rem; font-weight: 600;">
                             Total: ₹${formatNumber(totalAmt, 2)}
                         </span>
                         ${paidAmt > 0 ? `
-                            <span class="badge bg-info-subtle text-primary border border-info-subtle">
+                            <span class="badge bg-info-subtle text-primary border border-info-subtle px-2 py-1" style="font-size: 0.82rem; font-weight: 600;">
                                 Paid: ₹${formatNumber(paidAmt, 2)}
                             </span>
                         ` : ''}
-                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-bold">
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-bold px-2 py-1" style="font-size: 0.82rem;">
                             <i class="fa-solid fa-clock-rotate-left me-1"></i> Pending: ₹${formatNumber(pendingAmt, 2)}
                         </span>
                     </div>
                 `;
             } else {
                 feedback.innerHTML = `
-                    <div class="d-flex align-items-center flex-wrap gap-1 mt-1 fs-9">
-                        <span class="text-success fw-bold me-1">
+                    <div class="d-flex align-items-center flex-wrap gap-2 mt-2">
+                        <span class="text-success fw-bold me-1" style="font-size: 0.85rem;">
                             <i class="fa-solid fa-circle-check me-1"></i> Bill: <strong>${escapeHtml(val)}</strong>
                         </span>
-                        <span class="badge bg-success-subtle text-success border border-success-subtle fw-bold">
+                        <span class="badge bg-success-subtle text-success border border-success-subtle fw-bold px-2 py-1" style="font-size: 0.82rem;">
                             <i class="fa-solid fa-check me-1"></i> Settled (₹${formatNumber(totalAmt, 2)})
                         </span>
                     </div>

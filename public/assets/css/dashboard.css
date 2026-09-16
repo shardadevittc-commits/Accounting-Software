@@ -75,7 +75,7 @@ body {
     top: 0;
     z-index: 1030;
     background-color: var(--topbar-bg);
-    padding: 18px 38px;
+    padding: 13px 38px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -92,7 +92,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    gap: 12px;
+    gap: 14px;
     font-weight: 700;
     font-size: 1.35rem;
     color: #ffffff;
@@ -110,6 +110,74 @@ body {
 }
 
 .brand-gem { border-radius: 4px; }
+
+/* DBS Brand Logo Badge & Text - Prominent & Crisp */
+.brand-logo-badge {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 5px 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), 0 1px 3px rgba(0, 0, 0, 0.15);
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    height: 56px;
+    flex-shrink: 0;
+}
+
+.brand-logo:hover .brand-logo-badge {
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+
+.brand-logo-img {
+    height: 46px;
+    width: auto;
+    max-width: 140px;
+    object-fit: contain;
+    display: block;
+}
+
+.brand-divider {
+    width: 1.5px;
+    height: 36px;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.05));
+    flex-shrink: 0;
+}
+
+.brand-title-group {
+    line-height: 1.15;
+    justify-content: center;
+}
+
+.brand-title-main {
+    font-size: 1.125rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: #ffffff;
+    font-family: var(--saas-font, 'Outfit', 'Inter', sans-serif);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.brand-title-sub {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 3px;
+}
+
+.brand-sub-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #93c5fd;
+    background: rgba(37, 99, 235, 0.2);
+    border: 1px solid rgba(37, 99, 235, 0.4);
+    padding: 2px 8px;
+    border-radius: 4px;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
 
 .topbar-center-nav {
     flex: 0 0 auto;

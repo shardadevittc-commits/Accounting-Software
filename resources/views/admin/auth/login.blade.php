@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Login | Accounts ERP</title>
 
+    <!-- Favicon & App Icons -->
+    <link rel="icon" type="image/png" sizes="64x64" href="{{ asset('favicon.png') }}">
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,18 +29,14 @@
     <div class="login-page-wrapper">
         <div class="login-card-container">
             <!-- Brand Header -->
-            <div class="login-brand-header">
-                <a href="#" class="brand-logo mb-2">
-                    <div class="brand-icon-gems">
-                        <div class="brand-gem bg-gem-1"></div>
-                        <div class="brand-gem bg-gem-2"></div>
-                        <div class="brand-gem bg-gem-3"></div>
-                        <div class="brand-gem bg-gem-4"></div>
+            <div class="login-brand-header text-center">
+                <div class="mb-3 d-flex justify-content-center">
+                    <div class="brand-logo-badge" style="height: 64px; padding: 6px 18px; border-radius: 14px;">
+                        <img src="{{ asset('assets/images/dbs-logo.png') }}" alt="Divine Bright Steels" style="height: 52px; width: auto; object-fit: contain;">
                     </div>
-                    <!-- <span>Tixx</span> -->
-                </a>
-                <h4 class="fw-bold text-white mb-1">Login to Your Account</h4>
-                <p class="login-subtitle">Sign in to continue to your dashboard</p>
+                </div>
+                <h4 class="fw-bold text-white mb-1">DIVINE BRIGHT STEELS</h4>
+                <p class="login-subtitle">Accounts &amp; Financial ERP Login</p>
             </div>
             <!-- Session Notifications / Validation Errors -->
             @include('admin.layouts.partials.alerts')

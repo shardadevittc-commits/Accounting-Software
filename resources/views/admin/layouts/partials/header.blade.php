@@ -1,14 +1,17 @@
 <!-- Top Horizontal Navigation Bar Header Partial (Spacious & Clean Layout) -->
 <header class="top-navbar">
     <!-- Brand Logo -->
-    <a href="{{ route('dashboard') }}" class="brand-logo">
-        <div class="brand-icon-gems">
-            <div class="brand-gem bg-gem-1"></div>
-            <div class="brand-gem bg-gem-2"></div>
-            <div class="brand-gem bg-gem-3"></div>
-            <div class="brand-gem bg-gem-4"></div>
+    <a href="{{ route('dashboard') }}" class="brand-logo" title="Divine Bright Steels - Accounts ERP">
+        <div class="brand-logo-badge">
+            <img src="{{ asset('assets/images/dbs-logo.png') }}" alt="Divine Bright Steels" class="brand-logo-img">
         </div>
-        <span>Accounting<span class="fs-6 fw-normal text-muted ms-1">Accounts ERP</span></span>
+        <div class="brand-divider d-none d-lg-block"></div>
+        <div class="brand-title-group d-none d-lg-flex flex-column">
+            <span class="brand-title-main">DIVINE BRIGHT STEELS</span>
+            <span class="brand-title-sub">
+                <span class="brand-sub-badge"><i class="fa-solid fa-cube me-1"></i> ACCOUNTS ERP</span>
+            </span>
+        </div>
     </a>
 
     <!-- Top Horizontal Navigation Menu (Spacious 6 Core Categories with Submenu Indicators) -->

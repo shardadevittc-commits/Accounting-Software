@@ -6,6 +6,12 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dashboard | Accounts ERP')</title>
 
+    <!-- Favicon & App Icons -->
+    <link rel="icon" type="image/png" sizes="64x64" href="{{ asset('favicon.png') }}">
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
+
     <!-- Global User Saved Theme Config -->
     <script>
         window.USER_THEME_COLOR = "{{ auth()->check() && auth()->user()->theme_color ? auth()->user()->theme_color : '#2563EB' }}";
