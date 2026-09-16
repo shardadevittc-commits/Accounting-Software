@@ -1489,10 +1489,12 @@
             partyLedgerId = matchedLedger.id;
         }
 
-        // Debit Party, Credit Discount / Rebate Account (Single Debit option as requested)
+        // Discount Settlement: Debit Discount/Rebate Account (Expense), Credit Party Account (Settlement)
+        const refBillNo = document.getElementById("v_reference_no") ? document.getElementById("v_reference_no").value : '';
+        const billSuffix = refBillNo ? ` (Ref: ${refBillNo})` : '';
         const rows = [
-            { ledger_id: partyLedgerId, description: `Debit / Discount to ${partyName}`, debit: discountAmt, credit: 0, party_name: partyName },
-            { ledger_id: discLedgerId, description: `Discount / Rebate A/c`, debit: 0, credit: discountAmt }
+            { ledger_id: discLedgerId, description: `Discount / Bad Debts Allowed${billSuffix}`, debit: discountAmt, credit: 0 },
+            { ledger_id: partyLedgerId, description: `Discount / Bill Settlement${billSuffix}`, debit: 0, credit: discountAmt, party_name: partyName }
         ];
 
         renderDynamicRows(rows);
@@ -1794,6 +1796,10 @@
                     </div>
                 `;
             }
+        }
+
+        if (activeVoucherType === 'general') {
+            rebuildGeneralEntries();
         }
     }
 
@@ -2298,8 +2304,9 @@
         } else if (activeVoucherType === 'general') {
             const gSelect = document.getElementById("general_counter_ledger");
             const gVal = (window.jQuery ? $('#general_counter_ledger').val() : null) || gSelect?.value;
-            payload.transaction_mode = 'payment'; // Debit mode
+            payload.transaction_mode = 'receipt'; // Credit to party ledger (settlement)
             payload.payment_method = 'general';
+            payload.party_type = 'customer';
             payload.description = 'General Voucher (Discount Adjustment)';
             const opt = gSelect ? (gSelect.querySelector(`option[value="${gVal}"]`) || gSelect.options[gSelect.selectedIndex]) : null;
             payload.party_name = opt ? (opt.getAttribute('data-name') || opt.textContent.split(' (')[0].trim()) : '';

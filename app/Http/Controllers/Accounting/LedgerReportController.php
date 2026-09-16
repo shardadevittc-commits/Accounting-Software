@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class LedgerReportController extends Controller
 {
@@ -260,9 +261,9 @@ class LedgerReportController extends Controller
             $vDate = $v->voucher_date ? Carbon::parse($v->voucher_date)->format('Y-m-d') : '9999-99-99';
             $vType = strtolower($v->voucher_type ?: 'cash');
             
-            // Receipts from customer are Credits (reduce debit balance)
+            // Receipts from customer and discounts/settlements are Credits (reduce debit balance)
             // Payments to customer/supplier are Debits
-            $isDebit = ($v->transaction_mode === 'payment');
+            $isDebit = ($v->transaction_mode === 'payment' && $vType !== 'general');
             $amt = (float)($v->total_credit > 0 ? $v->total_credit : $v->total_debit);
 
             $prefix = $isDebit ? 'To ' : 'By ';
@@ -270,6 +271,8 @@ class LedgerReportController extends Controller
                 $narr = $prefix . $v->narration;
             } elseif ($vType === 'cash') {
                 $narr = $prefix . 'Cash';
+            } elseif ($vType === 'general') {
+                $narr = $prefix . (!empty($v->reference_no) ? 'Discount on ' . $v->reference_no : 'Discount / Bad Debts');
             } elseif (!empty($v->reference_no)) {
                 $narr = $prefix . $v->reference_no;
             } elseif ($vType === 'bank') {
@@ -408,5 +411,90 @@ class LedgerReportController extends Controller
                 'dc' => $closingDc,
             ],
         ];
+    }
+
+    /**
+     * Export currently filtered ledger transactions to CSV.
+     */
+    public function export(Request $request): StreamedResponse
+    {
+        $this->checkPermission();
+
+        $buyerName = trim($request->input('buyer_name', ''));
+        $dateFrom  = $request->input('date_from');
+        $dateTo    = $request->input('date_to');
+
+        $ledgerData = $this->buildLedgerTransactions($buyerName, $dateFrom, $dateTo, 'asc');
+        $transactions = $ledgerData['transactions'];
+        $totals = $ledgerData['totals'];
+
+        $sanitizedName = !empty($buyerName) ? preg_replace('/[^A-Za-z0-9_\-]/', '_', $buyerName) : 'All_Parties';
+        $filename = "ledger_statement_{$sanitizedName}_" . date('Ymd_His') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        $callback = function () use ($transactions, $totals, $buyerName, $dateFrom, $dateTo) {
+            $handle = fopen('php://output', 'w');
+            fputs($handle, "\xEF\xBB\xBF"); // UTF-8 BOM for Excel compatibility
+
+            // Header metadata
+            fputcsv($handle, ['DIVINE BRIGHT STEELS - LEDGER STATEMENT']);
+            fputcsv($handle, ['PARTY:', !empty($buyerName) ? $buyerName : 'All Parties Consolidated']);
+            if (!empty($dateFrom) || !empty($dateTo)) {
+                fputcsv($handle, ['DATE RANGE:', ($dateFrom ?: 'Beginning') . ' to ' . ($dateTo ?: 'Today')]);
+            }
+            fputcsv($handle, ['GENERATED ON:', date('d-m-Y H:i:s')]);
+            fputcsv($handle, []); // Blank line
+
+            // Table Column Headers
+            fputcsv($handle, [
+                'DATE',
+                'NARRATION / DESCRIPTION',
+                'WEIGHT (T)',
+                'DEBIT (INR)',
+                'CREDIT (INR)',
+                'BALANCE (INR)',
+                'D/C'
+            ]);
+
+            foreach ($transactions as $tx) {
+                $debit = ($tx['debit_raw'] > 0) ? number_format($tx['debit_raw'], 2, '.', '') : '';
+                $credit = ($tx['credit_raw'] > 0) ? number_format($tx['credit_raw'], 2, '.', '') : '';
+                $balance = number_format($tx['balance_raw'] ?? 0, 2, '.', '');
+                $weight = !empty($tx['weight_display']) ? $tx['weight_display'] : '';
+
+                fputcsv($handle, [
+                    $tx['date_display'] ?? '',
+                    $tx['narration'] ?? '',
+                    $weight,
+                    $debit,
+                    $credit,
+                    $balance,
+                    $tx['dc'] ?? ''
+                ]);
+            }
+
+            // Summary Footer
+            fputcsv($handle, []); // Blank line
+            fputcsv($handle, [
+                'TOTAL',
+                'Closing Balance: ' . number_format($totals['closing_balance'], 2, '.', '') . ' ' . $totals['dc'],
+                $totals['total_weight'] ?? '',
+                number_format($totals['total_debit'], 2, '.', ''),
+                number_format($totals['total_credit'], 2, '.', ''),
+                number_format($totals['closing_balance'], 2, '.', ''),
+                $totals['dc']
+            ]);
+
+            fclose($handle);
+        };
+
+        return new StreamedResponse($callback, 200, $headers);
     }
 }

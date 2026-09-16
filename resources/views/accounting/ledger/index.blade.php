@@ -1,6 +1,6 @@
 @extends('admin.layouts.app')
 
-@section('title', 'General Ledger Statement | Accounts ERP')
+@section('title', 'Ledger Statement | Accounts ERP')
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('assets/css/accounting_dashboard.css') }}">
@@ -167,11 +167,11 @@
                 <span class="breadcrumb-separator"><i class="fa-solid fa-chevron-right"></i></span>
                 <a href="{{ route('vouchers.index') }}">Accounting</a>
                 <span class="breadcrumb-separator"><i class="fa-solid fa-chevron-right"></i></span>
-                <span class="breadcrumb-active">General Ledger</span>
+                <span class="breadcrumb-active">Ledger</span>
             </nav>
             <h1 class="header-title">
                 <span class="header-icon-badge"><i class="fa-solid fa-book-open"></i></span>
-                General Ledger Statement
+                Ledger Statement
             </h1>
             <p class="header-subtitle">Chronological party statement, transaction entries, running debit/credit balances & printable copy of account.</p>
         </div>
@@ -179,6 +179,10 @@
             <button class="btn-header-action" onclick="loadLedgerData()" id="btnRefreshLedger" title="Refresh Statement">
                 <i class="fa-solid fa-arrows-rotate" id="syncIcon"></i>
                 <span>Refresh</span>
+            </button>
+            <button type="button" class="btn btn-outline-primary d-flex align-items-center gap-2 px-3 py-2 fw-bold shadow-sm" onclick="exportLedgerCsv()" title="Export Statement to CSV">
+                <i class="fa-solid fa-file-arrow-down"></i>
+                <span>Export CSV</span>
             </button>
             <button type="button" class="btn btn-primary d-flex align-items-center gap-2 px-3 py-2 fw-bold shadow-sm" onclick="openPrintView()" title="Print A4 Copy of Account">
                 <i class="fa-solid fa-print"></i>
@@ -277,6 +281,10 @@
                 <button type="button" class="btn-filter-reset" id="btnClear" onclick="clearLedgerFilters()" title="Reset Filters">
                     <i class="fa-solid fa-arrow-rotate-left"></i>
                     <span>Clear</span>
+                </button>
+                <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center gap-2 px-3 py-2 fw-semibold" onclick="exportLedgerCsv()" title="Export CSV">
+                    <i class="fa-solid fa-file-arrow-down"></i>
+                    <span>CSV</span>
                 </button>
                 <button type="button" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2 px-3 py-2 fw-semibold" onclick="openPrintView()" title="Print Statement">
                     <i class="fa-solid fa-print"></i>
@@ -630,6 +638,21 @@
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
+    }
+
+    /**
+     * Export Ledger CSV
+     */
+    function exportLedgerCsv() {
+        const buyerVal = (window.jQuery ? $('#filterBuyerName').val() : null) || document.getElementById("filterBuyerName")?.value || '';
+
+        const params = new URLSearchParams({
+            buyer_name: buyerVal,
+            date_from: document.getElementById("filterDateFrom") ? document.getElementById("filterDateFrom").value : '',
+            date_to: document.getElementById("filterDateTo") ? document.getElementById("filterDateTo").value : '',
+        });
+
+        window.location.href = `/ledger/export?${params.toString()}`;
     }
 </script>
 @endpush

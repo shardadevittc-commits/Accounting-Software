@@ -81,6 +81,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [LedgerReportController::class, 'index'])->name('index');
         Route::get('/data', [LedgerReportController::class, 'data'])->name('data');
         Route::get('/print', [LedgerReportController::class, 'print'])->name('print');
+        Route::get('/export', [LedgerReportController::class, 'export'])->name('export');
     });
 
     // Customer Purchase Orders Routes
