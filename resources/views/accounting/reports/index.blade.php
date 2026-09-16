@@ -837,17 +837,20 @@
 
         let html = '';
         rows.forEach(r => {
-            // Bill No cell presentation
+            // Check if this row is a voucher entry (General, Cash, Bank voucher / payment)
+            const isVoucher = r.is_voucher || (!r.is_bill_header && parseFloat(r.received_amt) > 0) || r.is_no_bill;
+
+            // Bill No cell presentation: Vouchers display blank/dash (-)
             let billHtml = '';
-            if (r.is_no_bill || !r.bill_no || r.bill_no === 'No Bill') {
-                billHtml = '<span class="no-bill-italic">No Bill</span>';
+            if (isVoucher || r.is_no_bill || !r.bill_no || r.bill_no === 'No Bill' || r.bill_no === '—' || r.bill_no === '-') {
+                billHtml = '<span class="text-muted">—</span>';
             } else {
                 billHtml = `<span class="bill-no-cell font-num">${escapeHtml(r.bill_no)}</span>`;
             }
 
             // Invoice Dt / Due Days presentation
             let dtDueHtml = '';
-            if (r.is_no_bill) {
+            if (r.is_no_bill || isVoucher) {
                 dtDueHtml = `<div class="due-days-primary font-num">${escapeHtml(r.invoice_date_formatted)}</div>`;
             } else {
                 dtDueHtml = `
@@ -858,6 +861,31 @@
                     </div>
                 `;
             }
+
+            // Token No: Vouchers display blank/dash (-)
+            const tokenCell = (!isVoucher && r.token_no && r.token_no !== '—' && r.token_no !== '-') 
+                ? `<span class="token-badge font-num">${escapeHtml(r.token_no)}</span>` 
+                : '<span class="text-muted">—</span>';
+
+            // Truck No: Vouchers display blank/dash (-)
+            const truckCell = (!isVoucher && r.truck_no && r.truck_no !== '—' && r.truck_no !== '-') 
+                ? `<span class="truck-plate-tag font-num">${escapeHtml(r.truck_no)}</span>` 
+                : '<span class="text-muted">—</span>';
+
+            // Taxable Amt: Vouchers display blank/dash (-)
+            const taxableCell = (!isVoucher && r.taxable_amt !== null && r.taxable_amt !== undefined && r.taxable_amt !== '' && r.taxable_amt !== '—')
+                ? `<span class="font-num text-muted">${formatCurrencyInt(r.taxable_amt)}</span>`
+                : '<span class="text-muted">—</span>';
+
+            // GST Amt: Vouchers display blank/dash (-)
+            const gstCell = (!isVoucher && r.gst_amt !== null && r.gst_amt !== undefined && r.gst_amt !== '' && r.gst_amt !== '—')
+                ? `<span class="font-num text-muted">${formatCurrencyInt(r.gst_amt)}</span>`
+                : '<span class="text-muted">—</span>';
+
+            // TDS: Vouchers display blank/dash (-)
+            const tdsCell = (!isVoucher && r.tds_amt !== null && r.tds_amt !== undefined && r.tds_amt !== '' && r.tds_amt !== '—')
+                ? `<span class="font-num text-muted">${formatCurrencyInt(r.tds_amt)}</span>`
+                : '<span class="text-muted">—</span>';
 
             // Received Amount with badge and subtext timestamp
             const recvAmtVal = parseFloat(r.received_amt) || 0;
@@ -912,13 +940,13 @@
                 <tr>
                     <td class="text-center font-num"><span class="badge-index">${r.s_no}</span></td>
                     <td><div class="party-cell" title="${escapeHtml(r.party_name)}">${escapeHtml(r.party_name)}</div></td>
-                    <td class="text-center font-num">${r.token_no && r.token_no !== '—' ? `<span class="token-badge font-num">${escapeHtml(r.token_no)}</span>` : '<span class="text-muted">—</span>'}</td>
-                    <td>${billHtml}</td>
+                    <td class="text-center font-num">${tokenCell}</td>
+                    <td class="text-center">${billHtml}</td>
                     <td>${dtDueHtml}</td>
-                    <td>${r.truck_no && r.truck_no !== '—' ? `<span class="truck-plate-tag font-num">${escapeHtml(r.truck_no)}</span>` : '<span class="text-muted">—</span>'}</td>
-                    <td class="text-end font-num text-muted">${r.taxable_amt !== null ? formatCurrencyInt(r.taxable_amt) : '—'}</td>
-                    <td class="text-end font-num text-muted">${r.gst_amt !== null ? formatCurrencyInt(r.gst_amt) : '—'}</td>
-                    <td class="text-end font-num text-muted">${r.tds_amt !== null ? formatCurrencyInt(r.tds_amt) : '—'}</td>
+                    <td class="text-center">${truckCell}</td>
+                    <td class="text-end font-num">${taxableCell}</td>
+                    <td class="text-end font-num">${gstCell}</td>
+                    <td class="text-end font-num">${tdsCell}</td>
                     <td class="text-end font-num fw-bold text-dark">${r.net_amt !== null ? formatCurrencyInt(r.net_amt) : '—'}</td>
                     <td class="text-end">${recvHtml}</td>
                     <td class="text-end font-num">${balHtml}</td>

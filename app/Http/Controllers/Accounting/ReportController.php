@@ -579,24 +579,16 @@ class ReportController extends Controller
                     return strcmp($a['sort_time'], $b['sort_time']);
                 });
 
-                // Find latest activity timestamp and highest entry ID for this bill
-                $latestBillTime = $invTimeStr;
+                // Bill group timestamp and group entry ID
+                $billGroupTime = $invTimeStr;
                 $groupEntryId = (int)$inv->id;
-                foreach ($allPaymentsForInv as $payItem) {
-                    if (!empty($payItem['raw_time']) && strcmp($payItem['raw_time'], $latestBillTime) > 0) {
-                        $latestBillTime = $payItem['raw_time'];
-                    }
-                    if (!empty($payItem['entry_id']) && (int)$payItem['entry_id'] > $groupEntryId) {
-                        $groupEntryId = (int)$payItem['entry_id'];
-                    }
-                }
 
                 // Row 1: Bill Creation Entry
                 $runningBalance = $netAmt;
                 $allRows[] = [
                     'row_time' => $invTimeStr,
                     'row_id' => (int)$inv->id,
-                    'group_time' => $latestBillTime,
+                    'group_time' => $billGroupTime,
                     'group_entry_id' => $groupEntryId,
                     'item_order' => 0,
                     'sort_key' => ($invDate ? $invDate->format('Y-m-d') : '9999-99-99') . '_' . $invTimeStr . '_0',
@@ -640,23 +632,24 @@ class ReportController extends Controller
                     $allRows[] = [
                         'row_time' => $payItem['raw_time'],
                         'row_id' => (int)$payItem['entry_id'],
-                        'group_time' => $latestBillTime,
+                        'group_time' => $billGroupTime,
                         'group_entry_id' => $groupEntryId,
                         'item_order' => $pIdx + 1,
                         'sort_key' => $payItem['sort_time'],
                         'invoice_id' => $inv->id,
                         'party_name' => $inv->customer_name ?: 'Unknown Customer',
-                        'token_no' => $tokenId,
-                        'bill_no' => $inv->invoice_no,
+                        'token_no' => '—',
+                        'bill_no' => '—',
                         'is_no_bill' => false,
+                        'is_voucher' => true,
                         'invoice_date_formatted' => $invDate ? $invDate->format('d M Y') : '—',
                         'credit_days' => $creditDays,
                         'due_text' => $dueStr,
                         'is_overdue' => $isOverdue,
-                        'truck_no' => $truckNo,
-                        'taxable_amt' => $taxableAmt,
-                        'gst_amt' => $gstAmt,
-                        'tds_amt' => $tdsAmt,
+                        'truck_no' => '—',
+                        'taxable_amt' => null,
+                        'gst_amt' => null,
+                        'tds_amt' => null,
                         'net_amt' => $netAmt,
                         'received_amt' => $payItem['amount'],
                         'received_badge' => $payItem['badge'],
@@ -691,8 +684,9 @@ class ReportController extends Controller
                     'invoice_id' => null,
                     'party_name' => $v->party_name ?: 'General Party',
                     'token_no' => '—',
-                    'bill_no' => 'No Bill',
+                    'bill_no' => '—',
                     'is_no_bill' => true,
+                    'is_voucher' => true,
                     'invoice_date_formatted' => $vDate ? $vDate->format('d M Y') : '—',
                     'credit_days' => null,
                     'due_text' => null,
@@ -714,27 +708,27 @@ class ReportController extends Controller
             }
         }
 
-        // 6. Sort all transactions: Latest records and newest entries first at the top (DESC)
+        // 6. Sort all transactions chronologically in ASCENDING order (ASC)
         usort($allRows, function ($a, $b) {
-            // 1. Row creation / activity time DESC (Newest entry at the very top)
-            $timeA = $a['row_time'] ?? ($a['group_time'] ?? '');
-            $timeB = $b['row_time'] ?? ($b['group_time'] ?? '');
+            // 1. Group / Bill time ASC (Earliest entry at the top)
+            $timeA = $a['group_time'] ?? ($a['row_time'] ?? '');
+            $timeB = $b['group_time'] ?? ($b['row_time'] ?? '');
             if ($timeA !== $timeB) {
-                return strcmp($timeB, $timeA);
+                return strcmp($timeA, $timeB);
             }
-            // 2. Higher row entry ID first (DESC)
-            $idA = (int)($a['row_id'] ?? ($a['group_entry_id'] ?? ($a['invoice_id'] ?? 0)));
-            $idB = (int)($b['row_id'] ?? ($b['group_entry_id'] ?? ($b['invoice_id'] ?? 0)));
+            // 2. Group entry ID ASC
+            $idA = (int)($a['group_entry_id'] ?? ($a['invoice_id'] ?? ($a['row_id'] ?? 0)));
+            $idB = (int)($b['group_entry_id'] ?? ($b['invoice_id'] ?? ($b['row_id'] ?? 0)));
             if ($idA !== $idB) {
-                return $idB <=> $idA;
+                return $idA <=> $idB;
             }
-            // 3. Higher item_order first (newer payments before bill header)
+            // 3. Item order ASC (bill header item_order 0 first, then payment 1, 2...)
             $orderA = (int)($a['item_order'] ?? 0);
             $orderB = (int)($b['item_order'] ?? 0);
             if ($orderA !== $orderB) {
-                return $orderB <=> $orderA;
+                return $orderA <=> $orderB;
             }
-            return strcmp($b['sort_key'], $a['sort_key']);
+            return strcmp($a['sort_key'], $b['sort_key']);
         });
 
         // 7. Filter by Status & Search Keyword

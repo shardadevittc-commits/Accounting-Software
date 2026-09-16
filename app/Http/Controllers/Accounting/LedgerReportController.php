@@ -77,7 +77,7 @@ class LedgerReportController extends Controller
         $dateFrom  = $request->input('date_from');
         $dateTo    = $request->input('date_to');
 
-        $ledgerData = $this->buildLedgerTransactions($buyerName, $dateFrom, $dateTo, 'desc');
+        $ledgerData = $this->buildLedgerTransactions($buyerName, $dateFrom, $dateTo, 'asc');
 
         return response()->json([
             'status' => 'success',
@@ -128,8 +128,9 @@ class LedgerReportController extends Controller
         $street = trim(count($addressParts) > 1 ? implode(',', array_slice($addressParts, 0, -1)) : $accountAddress);
 
         // Date range labels
-        $firstTxDate = !empty($txList) ? $txList[0]['date_raw'] : ($dateFrom ?: date('Y-m-01'));
-        $lastTxDate  = !empty($txList) ? end($txList)['date_raw'] : ($dateTo ?: date('Y-m-d'));
+        $dates = array_filter(array_column($txList, 'date_raw'), function($d) { return $d && $d !== '9999-99-99'; });
+        $earliestTxDate = !empty($dates) ? min($dates) : ($dateFrom ?: date('Y-m-01'));
+        $latestTxDate   = !empty($dates) ? max($dates) : ($dateTo ?: date('Y-m-d'));
 
         $account = [
             'name' => $buyerName,
@@ -137,8 +138,8 @@ class LedgerReportController extends Controller
             'city' => $city ?: 'Mandi Gobindgarh',
             'pan' => $accountPan ?: 'AAXFB9027F',
             'gst' => $accountGst ?: '03AAXFB9027F1ZB',
-            'from_date' => $dateFrom ? Carbon::parse($dateFrom)->format('d-m-Y') : Carbon::parse($firstTxDate)->format('d-m-Y'),
-            'upto_date' => $dateTo ? Carbon::parse($dateTo)->format('d-m-Y') : Carbon::parse($lastTxDate)->format('d-m-Y'),
+            'from_date' => $dateFrom ? Carbon::parse($dateFrom)->format('d-m-Y') : Carbon::parse($earliestTxDate)->format('d-m-Y'),
+            'upto_date' => $dateTo ? Carbon::parse($dateTo)->format('d-m-Y') : Carbon::parse($latestTxDate)->format('d-m-Y'),
         ];
 
         // Dynamic Chunking for Print Pages (~35 rows per A4 page)
@@ -208,7 +209,7 @@ class LedgerReportController extends Controller
     /**
      * Core calculation logic: Invoices (Debit) + Vouchers (Credit) with Running Balances.
      */
-    protected function buildLedgerTransactions(string $buyerName, ?string $dateFrom, ?string $dateTo, string $order = 'desc'): array
+    protected function buildLedgerTransactions(string $buyerName, ?string $dateFrom, ?string $dateTo, string $order = 'asc'): array
     {
         // 1. Fetch Invoices (filter by buyerName if provided)
         $invQuery = Invoice::with('items');

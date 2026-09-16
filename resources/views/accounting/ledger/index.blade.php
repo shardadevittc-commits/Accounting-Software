@@ -497,10 +497,10 @@
                 if (res.status === 'success') {
                     currentTransactions = res.transactions || [];
                     sortColumn = 'date';
-                    sortDirection = 'desc';
+                    sortDirection = 'asc';
                     document.querySelectorAll('.sort-icon').forEach(el => el.textContent = '⇅');
                     const dateSortIcon = document.getElementById('sort_date');
-                    if (dateSortIcon) dateSortIcon.textContent = '▼';
+                    if (dateSortIcon) dateSortIcon.textContent = '▲';
 
                     renderLedgerTable(currentTransactions, buyerVal);
                     renderFooter(res.totals, buyerVal);
