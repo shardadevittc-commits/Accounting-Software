@@ -432,8 +432,10 @@ class VoucherController extends Controller
         } elseif ($voucher->voucher_type === Voucher::TYPE_GENERAL) {
             $partyEntry = $voucher->entries->firstWhere('ledger.code', '!=', 'DISC-01');
             $discEntry = $voucher->entries->firstWhere('ledger.code', 'DISC-01');
+            $isPartyDebit = $partyEntry && ((float)$partyEntry->debit > 0);
+            $direction = $voucher->transaction_mode ?: ($isPartyDebit ? 'payment' : 'receipt');
             $generalData = [
-                'direction' => 'payment',
+                'direction' => $direction,
                 'amount' => (float)$voucher->total_debit,
                 'discount' => (float)($discEntry ? ($discEntry->credit > 0 ? $discEntry->credit : $discEntry->debit) : $voucher->total_debit),
                 'counter_ledger_id' => $partyEntry?->ledger_id ?: $voucher->party_id,

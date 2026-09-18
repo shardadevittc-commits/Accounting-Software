@@ -221,7 +221,7 @@ class LedgerReportController extends Controller
             ->get();
 
         // 2. Fetch Vouchers (Posted only; filter by buyerName if provided)
-        $vchQuery = Voucher::where('status', 'posted');
+        $vchQuery = Voucher::with('entries.ledger')->where('status', 'posted');
         if (!empty($buyerName)) {
             $vchQuery->where('party_name', $buyerName);
         }
@@ -262,18 +262,44 @@ class LedgerReportController extends Controller
             $vDate = $v->voucher_date ? Carbon::parse($v->voucher_date)->format('Y-m-d') : '9999-99-99';
             $vType = strtolower($v->voucher_type ?: 'cash');
             
-            // Receipts from customer and discounts/settlements are Credits (reduce debit balance)
-            // Payments to customer/supplier are Debits
-            $isDebit = ($v->transaction_mode === 'payment' && $vType !== 'general');
+            // Determine whether Party is Debited or Credited in this voucher
+            $partyEntry = null;
+            if ($v->entries && $v->entries->isNotEmpty()) {
+                if ($v->party_id) {
+                    $partyEntry = $v->entries->firstWhere('ledger_id', $v->party_id);
+                }
+                if (!$partyEntry && !empty($v->party_name)) {
+                    $partyEntry = $v->entries->first(function ($e) use ($v) {
+                        return $e->ledger && $e->ledger->name === $v->party_name;
+                    });
+                }
+                if (!$partyEntry) {
+                    $partyEntry = $v->entries->first(function ($e) {
+                        $cat = $e->ledger?->category;
+                        return !in_array($cat, ['cash', 'bank', 'tax', 'expense', 'income']);
+                    });
+                }
+            }
+
+            if ($partyEntry) {
+                $isDebit = ((float)$partyEntry->debit > 0);
+            } else {
+                $isDebit = ($v->transaction_mode === 'payment' || $v->transaction_mode === 'debit');
+            }
+
             $amt = (float)($v->total_credit > 0 ? $v->total_credit : $v->total_debit);
 
             $prefix = $isDebit ? 'To ' : 'By ';
             if (!empty($v->narration)) {
                 $narr = $prefix . $v->narration;
             } elseif ($vType === 'cash') {
-                $narr = $prefix . 'Cash';
+                $narr = $prefix . ($isDebit ? 'Cash Payment' : 'Cash');
             } elseif ($vType === 'general') {
-                $narr = $prefix . (!empty($v->reference_no) ? 'Discount on ' . $v->reference_no : 'Discount / Bad Debts');
+                if ($isDebit) {
+                    $narr = $prefix . (!empty($v->reference_no) ? 'Adjustment on ' . $v->reference_no : 'General Voucher (Debit)');
+                } else {
+                    $narr = $prefix . (!empty($v->reference_no) ? 'Discount on ' . $v->reference_no : 'Discount / Bad Debts');
+                }
             } elseif (!empty($v->reference_no)) {
                 $narr = $prefix . $v->reference_no;
             } elseif ($vType === 'bank') {

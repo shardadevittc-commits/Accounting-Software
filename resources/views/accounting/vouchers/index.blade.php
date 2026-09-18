@@ -689,9 +689,14 @@
                         </button>
                     </div>
                     <div id="txn_slot_general" class="d-none">
-                        <button type="button" class="direction-toggle-btn active payment w-100" id="generalDirDebitBtn" style="height: 38px; cursor: default;">
-                            <i class="fa-solid fa-arrow-up-right me-1"></i> Debit
-                        </button>
+                        <div class="direction-toggle-group m-0" style="height: 38px; padding: 2px;">
+                            <button type="button" class="direction-toggle-btn active receipt" id="generalDirCreditBtn" onclick="setGeneralDirection('receipt')" style="padding: 4px 8px; font-size: 0.8rem;">
+                                <i class="fa-solid fa-arrow-down-left me-1"></i> Credit
+                            </button>
+                            <button type="button" class="direction-toggle-btn payment" id="generalDirDebitBtn" onclick="setGeneralDirection('payment')" style="padding: 4px 8px; font-size: 0.8rem;">
+                                <i class="fa-solid fa-arrow-up-right me-1"></i> Debit
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -830,9 +835,9 @@
                     <!-- 2. REFERENCE / BILL NO. -->
                     <div class="col-12" id="general_ref_slot"></div>
 
-                    <!-- 3. DISCOUNT (INR) * -->
+                    <!-- 3. AMOUNT (₹) * -->
                     <div class="col-12">
-                        <label class="form-label fs-8 fw-bold">DISCOUNT (INR) <span class="text-danger">*</span></label>
+                        <label class="form-label fs-8 fw-bold" id="generalAmountLabel">CREDIT / DISCOUNT AMOUNT (₹) <span class="text-danger">*</span></label>
                         <input type="number" step="0.01" min="0" class="form-control font-monospace fw-bold fs-5 text-primary" id="general_discount" placeholder="0.00" oninput="rebuildGeneralEntries()">
                     </div>
                 </div>
@@ -1235,6 +1240,7 @@
         if (feedback) feedback.innerHTML = '';
         const discInput = document.getElementById("general_discount");
         if (discInput) discInput.value = '';
+        setGeneralDirection('receipt');
 
         // Apply lock state for Reference/Bill No
         updateReferenceNoState();
@@ -1451,8 +1457,41 @@
     }
 
     // =========================================================================
-    // 7.1. GENERAL VOUCHER LOGIC
+    // 7.1. GENERAL VOUCHER LOGIC (CREDIT & DEBIT SUPPORT)
     // =========================================================================
+    let generalDirection = 'receipt'; // 'receipt' = Credit Party, 'payment' = Debit Party
+
+    function setGeneralDirection(dir) {
+        generalDirection = dir;
+        const cBtn = document.getElementById("generalDirCreditBtn");
+        const dBtn = document.getElementById("generalDirDebitBtn");
+
+        if (dir === 'receipt') {
+            if (cBtn) {
+                cBtn.classList.add('active', 'receipt');
+            }
+            if (dBtn) {
+                dBtn.classList.remove('active', 'payment');
+            }
+        } else {
+            if (dBtn) {
+                dBtn.classList.add('active', 'payment');
+            }
+            if (cBtn) {
+                cBtn.classList.remove('active', 'receipt');
+            }
+        }
+
+        const lbl = document.getElementById("generalAmountLabel");
+        if (lbl) {
+            lbl.innerHTML = dir === 'payment'
+                ? 'DEBIT / ADJUSTMENT AMOUNT (₹) <span class="text-danger">*</span>'
+                : 'CREDIT / DISCOUNT AMOUNT (₹) <span class="text-danger">*</span>';
+        }
+
+        rebuildGeneralEntries();
+    }
+
     function rebuildGeneralEntries() {
         if (activeVoucherType !== 'general') return;
 
@@ -1489,13 +1528,41 @@
             partyLedgerId = matchedLedger.id;
         }
 
-        // Discount Settlement: Debit Discount/Rebate Account (Expense), Credit Party Account (Settlement)
         const refBillNo = document.getElementById("v_reference_no") ? document.getElementById("v_reference_no").value : '';
         const billSuffix = refBillNo ? ` (Ref: ${refBillNo})` : '';
-        const rows = [
-            { ledger_id: discLedgerId, description: `Discount / Bad Debts Allowed${billSuffix}`, debit: discountAmt, credit: 0 },
-            { ledger_id: partyLedgerId, description: `Discount / Bill Settlement${billSuffix}`, debit: 0, credit: discountAmt, party_name: partyName }
-        ];
+
+        const rows = [];
+        if (generalDirection === 'receipt') {
+            // CREDIT to Party: Party balance decreases (Settlement / Rebate)
+            rows.push({
+                ledger_id: discLedgerId,
+                description: `Discount / Rebate Allowed${billSuffix}`,
+                debit: discountAmt,
+                credit: 0
+            });
+            rows.push({
+                ledger_id: partyLedgerId,
+                description: `Credit / Bill Settlement${billSuffix}`,
+                debit: 0,
+                credit: discountAmt,
+                party_name: partyName
+            });
+        } else {
+            // DEBIT to Party: Party balance increases (Debit note / Adjustment)
+            rows.push({
+                ledger_id: partyLedgerId,
+                description: `General Debit / Adjustment${billSuffix}`,
+                debit: discountAmt,
+                credit: 0,
+                party_name: partyName
+            });
+            rows.push({
+                ledger_id: discLedgerId,
+                description: `Discount / Rebate Reversal${billSuffix}`,
+                debit: 0,
+                credit: discountAmt
+            });
+        }
 
         renderDynamicRows(rows);
         updateSaveButtonState();
@@ -2218,8 +2285,8 @@
             if (discountAmt <= 0) {
                 Swal.fire({
                     icon: 'warning',
-                    title: 'Discount Required',
-                    text: 'Please enter Discount (INR) greater than ₹0.',
+                    title: 'Amount Required',
+                    text: 'Please enter Amount greater than ₹0.',
                 });
                 return;
             }
@@ -2304,10 +2371,10 @@
         } else if (activeVoucherType === 'general') {
             const gSelect = document.getElementById("general_counter_ledger");
             const gVal = (window.jQuery ? $('#general_counter_ledger').val() : null) || gSelect?.value;
-            payload.transaction_mode = 'receipt'; // Credit to party ledger (settlement)
+            payload.transaction_mode = generalDirection; // 'receipt' = Credit, 'payment' = Debit
             payload.payment_method = 'general';
             payload.party_type = 'customer';
-            payload.description = 'General Voucher (Discount Adjustment)';
+            payload.description = `General Voucher (${generalDirection === 'payment' ? 'Debit' : 'Credit'})`;
             const opt = gSelect ? (gSelect.querySelector(`option[value="${gVal}"]`) || gSelect.options[gSelect.selectedIndex]) : null;
             payload.party_name = opt ? (opt.getAttribute('data-name') || opt.textContent.split(' (')[0].trim()) : '';
             payload.party_id = opt ? opt.getAttribute('data-party-id') : null;
@@ -2505,6 +2572,7 @@
                         }
                     } else if (v.voucher_type === 'general') {
                         const gd = v.general_data || {};
+                        setGeneralDirection(gd.direction || 'receipt');
                         const discVal = gd.discount !== undefined ? Number(gd.discount).toFixed(2) : (gd.amount !== undefined ? Number(gd.amount).toFixed(2) : '0.00');
                         const discInput = document.getElementById("general_discount");
                         if (discInput) discInput.value = discVal;
