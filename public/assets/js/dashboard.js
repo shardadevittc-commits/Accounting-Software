@@ -40,20 +40,26 @@ document.addEventListener('DOMContentLoaded', function () {
     const chartDatasets = {
         monthly: {
             labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-            sales: [95000, 110000, 125000, 98000, 140000, 115000, 130000, 105000, 120000, 135000, 125000, 150000],
-            purchases: [65000, 72000, 85000, 70000, 92000, 80000, 88000, 75000, 82000, 90000, 82000, 98000]
+            sales: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            purchases: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         },
         quarterly: {
             labels: ['Q1 (Jan-Mar)', 'Q2 (Apr-Jun)', 'Q3 (Jul-Sep)', 'Q4 (Oct-Dec)'],
-            sales: [330000, 353000, 355000, 410000],
-            purchases: [222000, 242000, 245000, 270000]
+            sales: [0, 0, 0, 0],
+            purchases: [0, 0, 0, 0]
         },
         yearly: {
-            labels: ['2023', '2024', '2025', '2026 (YTD)'],
-            sales: [980000, 1150000, 1380000, 1448000],
-            purchases: [680000, 780000, 920000, 979000]
+            labels: ['2024', '2025', '2026 (YTD)'],
+            sales: [0, 0, 0],
+            purchases: [0, 0, 0]
         }
     };
+
+    if (window.DASHBOARD_CHART_DATA && window.DASHBOARD_CHART_DATA.sales_purchase) {
+        chartDatasets.monthly.labels = window.DASHBOARD_CHART_DATA.sales_purchase.labels;
+        chartDatasets.monthly.sales = window.DASHBOARD_CHART_DATA.sales_purchase.sales;
+        chartDatasets.monthly.purchases = window.DASHBOARD_CHART_DATA.sales_purchase.collections;
+    }
 
     if (salesPurchaseCtx) {
         const ctx = salesPurchaseCtx.getContext('2d');
@@ -64,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 labels: chartDatasets.monthly.labels,
                 datasets: [
                     {
-                        label: 'Sales (₹)',
+                        label: 'Sales Revenue (₹)',
                         data: chartDatasets.monthly.sales,
                         borderColor: '#2563EB',
                         backgroundColor: 'rgba(37, 99, 235, 0.08)',
@@ -76,16 +82,16 @@ document.addEventListener('DOMContentLoaded', function () {
                         pointHoverRadius: 6
                     },
                     {
-                        label: 'Purchases (₹)',
+                        label: 'Collections Received (₹)',
                         data: chartDatasets.monthly.purchases,
-                        borderColor: '#D97706',
-                        backgroundColor: 'rgba(217, 119, 6, 0.04)',
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.04)',
                         borderWidth: 2.5,
                         borderDash: [4, 4],
                         fill: true,
                         tension: 0.35,
                         pointBackgroundColor: '#FFFFFF',
-                        pointBorderColor: '#D97706',
+                        pointBorderColor: '#10B981',
                         pointHoverRadius: 6
                     }
                 ]
@@ -126,7 +132,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         ticks: {
                             font: { family: 'Outfit', size: 11 },
                             callback: function(value) {
-                                return '₹' + (value / 1000) + 'k';
+                                return '₹' + (value >= 1000 ? (value / 1000) + 'k' : value);
                             }
                         }
                     }
@@ -155,17 +161,23 @@ document.addEventListener('DOMContentLoaded', function () {
     btnQuarterly?.addEventListener('click', () => updateChartFilter('quarterly', btnQuarterly));
     btnYearly?.addEventListener('click', () => updateChartFilter('yearly', btnYearly));
 
-    // 3. INCOME VS EXPENSE DONUT CHART WIDGET
+    // 3. INCOME VS EXPENSE / COLLECTIONS DONUT CHART WIDGET
     // ==========================================================================
     const donutCtx = document.getElementById('incomeExpenseDonutChart');
     if (donutCtx) {
+        let donutLabels = ['Cash', 'Bank / Online', 'General Adjustment'];
+        let donutData = [0, 0, 0];
+        if (window.DASHBOARD_CHART_DATA && window.DASHBOARD_CHART_DATA.payment_modes) {
+            donutLabels = window.DASHBOARD_CHART_DATA.payment_modes.labels;
+            donutData = window.DASHBOARD_CHART_DATA.payment_modes.values;
+        }
         new Chart(donutCtx.getContext('2d'), {
             type: 'doughnut',
             data: {
-                labels: ['Total Income', 'Total Expense', 'Net Profit'],
+                labels: donutLabels,
                 datasets: [{
-                    data: [1680000, 1250000, 430000],
-                    backgroundColor: ['#16A34A', '#DC2626', '#2563EB'],
+                    data: donutData,
+                    backgroundColor: ['#2563EB', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'],
                     borderWidth: 0,
                     hoverOffset: 6
                 }]

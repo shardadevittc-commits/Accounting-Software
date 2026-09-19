@@ -26,12 +26,12 @@
         <!-- Financial Year Selector -->
         <div class="dropdown">
             <button class="btn btn-white border bg-white shadow-sm btn-sm dropdown-toggle fw-semibold text-secondary rounded-3 px-3 py-2 fs-7" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="fa-solid fa-calendar-days text-warning me-1"></i> FY 2025-26
+                <i class="fa-solid fa-calendar-days text-warning me-1"></i> {{ $user->financial_year }}
             </button>
             <ul class="dropdown-menu shadow">
-                <li><a class="dropdown-item active fw-bold fs-7" href="#">FY 2025-26 (Current)</a></li>
+                <li><a class="dropdown-item active fw-bold fs-7" href="#">{{ $user->financial_year }} (Current)</a></li>
+                <li><a class="dropdown-item fs-7" href="#">FY 2025-26</a></li>
                 <li><a class="dropdown-item fs-7" href="#">FY 2024-25</a></li>
-                <li><a class="dropdown-item fs-7" href="#">FY 2023-24</a></li>
             </ul>
         </div>
 
@@ -66,50 +66,27 @@
             <span class="fw-bold fs-7 text-uppercase letter-spacing-1">Quick Actions</span>
         </div>
         <div class="quick-actions-buttons d-flex align-items-center flex-wrap gap-2">
-            @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['sales', 'accountant']) || auth()->user()->hasPermission('sales.create'))
+            <!-- @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['sales', 'accountant']) || auth()->user()->hasPermission('sales.create'))
             <a href="{{ route('sales.orders') }}" class="btn btn-primary btn-sm rounded-3 px-3 py-2 fw-semibold fs-7 shadow-sm text-decoration-none">
                 <i class="fa-solid fa-file-invoice-dollar me-1"></i> Sales Orders
             </a>
-            @endif
-
-            @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['purchase', 'accountant']) || auth()->user()->hasPermission('purchase.create'))
-            <button class="btn btn-outline-primary btn-sm rounded-3 px-3 py-2 fw-semibold fs-7">
-                <i class="fa-solid fa-cart-plus me-1"></i> New Purchase
-            </button>
-            @endif
+            @endif -->
 
             @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['sales', 'accountant']) || auth()->user()->hasPermission('payments.create'))
-            <button class="btn btn-success btn-sm rounded-3 px-3 py-2 fw-semibold fs-7 text-white shadow-sm">
+            <a href="{{ route('vouchers.index') }}" class="btn btn-success btn-sm rounded-3 px-3 py-2 fw-semibold fs-7 text-white shadow-sm text-decoration-none">
                 <i class="fa-solid fa-hand-holding-dollar me-1"></i> Receive Payment
-            </button>
-            @endif
-
-            @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['purchase', 'accountant']))
-            <button class="btn btn-danger btn-sm rounded-3 px-3 py-2 fw-semibold fs-7 shadow-sm">
-                <i class="fa-solid fa-money-bill-transfer me-1"></i> Make Payment
-            </button>
+            </a>
             @endif
 
             @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole('accountant'))
-            <button class="btn btn-warning btn-sm rounded-3 px-3 py-2 fw-semibold fs-7 text-dark">
-                <i class="fa-solid fa-receipt me-1"></i> New Expense
-            </button>
-            <button class="btn btn-info btn-sm rounded-3 px-3 py-2 fw-semibold fs-7 text-white">
-                <i class="fa-solid fa-pen-to-square me-1"></i> Journal Entry
-            </button>
+            <a href="{{ route('vouchers.index') }}" class="btn btn-info btn-sm rounded-3 px-3 py-2 fw-semibold fs-7 text-white text-decoration-none">
+                <i class="fa-solid fa-pen-to-square me-1"></i> Accounting Vouchers
+            </a>
             @endif
 
-            @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['sales', 'accountant']))
-            <button class="btn btn-light border btn-sm rounded-3 px-3 py-2 fw-semibold fs-7 text-secondary">
-                <i class="fa-solid fa-user-plus me-1"></i> Customer
-            </button>
-            @endif
-
-            @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['purchase', 'accountant']))
-            <button class="btn btn-light border btn-sm rounded-3 px-3 py-2 fw-semibold fs-7 text-secondary">
-                <i class="fa-solid fa-building-user me-1"></i> Supplier
-            </button>
-            @endif
+            <a href="{{ route('ledger.index') }}" class="btn btn-dark btn-sm rounded-3 px-3 py-2 fw-semibold fs-7 text-white text-decoration-none shadow-sm">
+                <i class="fa-solid fa-book-open me-1"></i> Ledger Statement
+            </a>
         </div>
     </div>
 </div>
@@ -136,7 +113,7 @@
     @endif
 
     <!-- 2. Total Purchase -->
-    @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['purchase', 'accountant']) || auth()->user()->hasPermission('purchase.view'))
+    <!-- @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['purchase', 'accountant']) || auth()->user()->hasPermission('purchase.view'))
     <div class="col-xl-3 col-lg-4 col-md-6">
         <div class="kpi-card h-100 border-start border-4 border-warning">
             <div class="d-flex align-items-center justify-content-between mb-2">
@@ -152,7 +129,7 @@
             </div>
         </div>
     </div>
-    @endif
+    @endif -->
 
     <!-- 3. Total Receivable -->
     @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->hasRole(['sales', 'accountant']))
@@ -235,8 +212,8 @@
         <div class="erp-card h-100">
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-2 border-bottom">
                 <div>
-                    <h5 class="erp-card-title mb-0">Sales vs Purchase Analysis</h5>
-                    <small class="text-muted fs-8">Monthly comparative revenue & outflow flow</small>
+                    <h5 class="erp-card-title mb-0">Sales vs Collections Analysis</h5>
+                    <small class="text-muted fs-8">Monthly comparative revenue billing & collections inflow</small>
                 </div>
                 <div class="btn-group btn-group-sm" role="group">
                     <button type="button" class="btn btn-outline-secondary active" id="btnFilterMonthly">Monthly</button>
@@ -255,26 +232,26 @@
     <div class="col-xl-4 col-lg-12">
         <div class="erp-card h-100">
             <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
-                <h5 class="erp-card-title mb-0">Income vs Expense</h5>
-                <span class="badge bg-success-subtle text-success rounded-pill fs-8">Profitable</span>
+                <h5 class="erp-card-title mb-0">Payment Modes & Balances</h5>
+                <span class="badge bg-success-subtle text-success rounded-pill fs-8">Live Balances</span>
             </div>
 
             <div class="position-relative d-flex justify-content-center align-items-center" style="height: 210px;">
                 <canvas id="incomeExpenseDonutChart"></canvas>
                 <div class="donut-center-text text-center">
-                    <small class="text-muted fs-8 d-block text-uppercase">Net Profit</small>
-                    <span class="fw-bold fs-5 text-success">₹4.30L</span>
+                    <small class="text-muted fs-8 d-block text-uppercase">Liquid Funds</small>
+                    <span class="fw-bold fs-6 text-success">₹{{ number_format($kpis['cash_bank_balance']['amount'], 2) }}</span>
                 </div>
             </div>
 
             <div class="mt-3 pt-2 border-top">
                 <div class="d-flex justify-content-between fs-7 mb-1">
-                    <span class="text-muted"><i class="fa-solid fa-circle text-success me-1 fs-8"></i> Total Income:</span>
-                    <span class="fw-bold text-dark">₹16,80,000.00</span>
+                    <span class="text-muted"><i class="fa-solid fa-circle text-success me-1 fs-8"></i> Total Sales Billed:</span>
+                    <span class="fw-bold text-dark">₹{{ number_format($kpis['total_sales']['amount'], 2) }}</span>
                 </div>
                 <div class="d-flex justify-content-between fs-7 mb-1">
-                    <span class="text-muted"><i class="fa-solid fa-circle text-danger me-1 fs-8"></i> Total Expense:</span>
-                    <span class="fw-bold text-dark">₹12,50,000.00</span>
+                    <span class="text-muted"><i class="fa-solid fa-circle text-info me-1 fs-8"></i> Total Outstanding:</span>
+                    <span class="fw-bold text-dark">₹{{ number_format($kpis['total_receivable']['amount'], 2) }}</span>
                 </div>
             </div>
         </div>
@@ -398,10 +375,10 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($receivableAging as $row)
+                        @forelse($receivableAging as $row)
                         <tr>
                             <td class="fw-bold text-dark">{{ $row['customer'] }}</td>
-                            <td class="text-muted">{{ $row['invoice'] }}</td>
+                            <td class="text-muted font-monospace">{{ $row['invoice'] }}</td>
                             <td>{{ $row['due_date'] }}</td>
                             <td class="fw-bold">₹{{ number_format($row['amount'], 2) }}</td>
                             <td class="text-danger fw-semibold">{{ $row['days_overdue'] }}d</td>
@@ -411,7 +388,14 @@
                                 </span>
                             </td>
                         </tr>
-                        @endforeach
+                        @empty
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                <i class="fa-solid fa-circle-check text-success fs-5 d-block mb-1"></i>
+                                No overdue receivables found.
+                            </td>
+                        </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
@@ -425,7 +409,7 @@
         <div class="erp-card h-100">
             <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
                 <h5 class="erp-card-title mb-0"><i class="fa-solid fa-clock-rotate-left me-2 text-danger"></i> Supplier Payable Aging</h5>
-                <a href="#" class="fs-8 text-primary fw-semibold text-decoration-none">View All Bills <i class="fa-solid fa-arrow-right"></i></a>
+                <a href="{{ route('ledger.index') }}" class="fs-8 text-primary fw-semibold text-decoration-none">View All Bills <i class="fa-solid fa-arrow-right"></i></a>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0 fs-7">
@@ -440,7 +424,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($payableAging as $row)
+                        @forelse($payableAging as $row)
                         <tr>
                             <td class="fw-bold text-dark">{{ $row['supplier'] }}</td>
                             <td class="text-muted">{{ $row['bill_no'] }}</td>
@@ -453,7 +437,14 @@
                                 </span>
                             </td>
                         </tr>
-                        @endforeach
+                        @empty
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                <i class="fa-solid fa-circle-check text-success fs-5 d-block mb-1"></i>
+                                No pending supplier payables recorded.
+                            </td>
+                        </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
@@ -528,7 +519,7 @@
                 <small class="text-muted fs-8">YTD Contribution</small>
             </div>
             <div class="list-group list-group-flush">
-                @foreach($topCustomers as $index => $customer)
+                @forelse($topCustomers as $index => $customer)
                 <div class="list-group-item d-flex align-items-center justify-content-between px-0 py-2 border-bottom">
                     <div class="d-flex align-items-center gap-3">
                         <span class="badge bg-light text-dark border rounded-circle p-2 fs-7 fw-bold" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;">
@@ -536,7 +527,7 @@
                         </span>
                         <div>
                             <div class="fw-bold text-dark fs-7">{{ $customer['name'] }}</div>
-                            <small class="text-muted fs-8">{{ $customer['invoices'] }} Paid Invoices</small>
+                            <small class="text-muted fs-8">{{ $customer['invoices'] }} Billed Invoice(s)</small>
                         </div>
                     </div>
                     <div class="text-end">
@@ -544,7 +535,12 @@
                         <small class="text-muted fs-8">Total Revenue</small>
                     </div>
                 </div>
-                @endforeach
+                @empty
+                <div class="text-center py-4 text-muted">
+                    <i class="fa-solid fa-users-slash fs-5 d-block mb-1"></i>
+                    No customer revenue data yet.
+                </div>
+                @endforelse
             </div>
         </div>
     </div>
@@ -562,13 +558,13 @@
                         <tr>
                             <th>Product</th>
                             <th>SKU</th>
-                            <th>Qty Sold</th>
+                            <th>Qty/Weight</th>
                             <th>Sales Value</th>
-                            <th>Profit</th>
+                            <th>Est. Margin</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($topProducts as $prod)
+                        @forelse($topProducts as $prod)
                         <tr>
                             <td class="fw-bold text-dark">{{ $prod['product'] }}</td>
                             <td class="text-muted font-monospace fs-8">{{ $prod['sku'] }}</td>
@@ -576,7 +572,14 @@
                             <td class="fw-bold">₹{{ number_format($prod['sales'], 2) }}</td>
                             <td class="fw-bold text-success">₹{{ number_format($prod['profit'], 2) }}</td>
                         </tr>
-                        @endforeach
+                        @empty
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-muted">
+                                <i class="fa-solid fa-boxes-packing fs-5 d-block mb-1"></i>
+                                No product sales recorded yet.
+                            </td>
+                        </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
@@ -615,7 +618,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($recentTransactions as $tx)
+                @forelse($recentTransactions as $tx)
                 <tr>
                     <td class="text-muted">{{ $tx['date'] }}</td>
                     <td class="font-monospace fw-bold text-primary">{{ $tx['reference'] }}</td>
@@ -626,8 +629,8 @@
                             {{ $tx['type'] }}
                         </span>
                     </td>
-                    <td class="text-end fw-bold {{ $tx['amount'] > 0 ? 'text-success' : 'text-danger' }}">
-                        {{ $tx['amount'] > 0 ? '+ ₹' . number_format($tx['amount'], 2) : '- ₹' . number_format(abs($tx['amount']), 2) }}
+                    <td class="text-end fw-bold {{ $tx['amount'] >= 0 ? 'text-success' : 'text-danger' }}">
+                        {{ $tx['amount'] >= 0 ? '+ ₹' . number_format($tx['amount'], 2) : '- ₹' . number_format(abs($tx['amount']), 2) }}
                     </td>
                     <td>
                         <span class="badge bg-success-subtle text-success rounded-pill px-2">
@@ -635,23 +638,30 @@
                         </span>
                     </td>
                 </tr>
-                @endforeach
+                @empty
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">
+                        <i class="fa-solid fa-receipt fs-5 d-block mb-1"></i>
+                        No recent accounting transactions found.
+                    </td>
+                </tr>
+                @endforelse
             </tbody>
         </table>
     </div>
 
-    <!-- Pagination Footer Bar -->
+    <!-- Table Footer -->
     <div class="d-flex align-items-center justify-content-between pt-3 mt-2 border-top fs-8">
-        <span class="text-muted fw-medium">Showing 1 to 6 of 124 transactions</span>
-        <nav aria-label="Transactions Page Navigation">
-            <ul class="pagination pagination-sm m-0 gap-1">
-                <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a></li>
-                <li class="page-item active" aria-current="page"><a class="page-link" href="#">1</a></li>
-                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                <li class="page-item"><a class="page-link" href="#">3</a></li>
-                <li class="page-item"><a class="page-link" href="#">Next</a></li>
-            </ul>
-        </nav>
+        <span class="text-muted fw-medium">Showing latest {{ count($recentTransactions) }} live transaction records</span>
+        <a href="{{ route('vouchers.index') }}" class="btn btn-sm btn-outline-primary fw-bold fs-8 text-decoration-none">
+            View All Accounting Vouchers <i class="fa-solid fa-arrow-right ms-1"></i>
+        </a>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    window.DASHBOARD_CHART_DATA = {!! $chartDataJson !!};
+</script>
+@endpush
 @endsection

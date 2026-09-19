@@ -3,7 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
+use App\Models\Ledger;
+use App\Models\Voucher;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -14,232 +20,354 @@ class DashboardController extends Controller
     {
         $authUser = Auth::user();
 
+        // 1. Current Financial Year Calculation (Indian FY: 01-Apr to 31-Mar)
+        $now = Carbon::now();
+        $fyStartYear = $now->month >= 4 ? $now->year : $now->year - 1;
+        $fyEndYear = $fyStartYear + 1;
+        $fyString = 'FY ' . $fyStartYear . '-' . substr((string)$fyEndYear, -2);
+
         $user = (object)[
             'name' => $authUser ? $authUser->name : 'Admin',
             'email' => $authUser ? $authUser->email : 'admin@gmail.com',
             'role' => $authUser && $authUser->roles->first() ? $authUser->roles->first()->name : 'Admin',
-            'company' => 'Tixx Accounting ERP Solutions Pvt Ltd',
-            'financial_year' => 'FY 2025-26',
+            'company' => 'DIVINE BRIGHT STEELS',
+            'financial_year' => $fyString,
         ];
 
-        // 6 Summary KPI Cards Data (Indian Currency ₹)
+        // 2. Sales & Dispatch Metrics
+        $totalSalesAmount = (float)Invoice::sum('grand_total');
+        $totalWeightTons = (float)InvoiceItem::sum('weight_tons');
+        $invoicesCount = Invoice::count();
+
+        // Month-over-Month Sales Growth
+        $currentMonthSales = (float)Invoice::whereMonth('invoice_date', $now->month)
+            ->whereYear('invoice_date', $now->year)
+            ->sum('grand_total');
+        $prevMonthDate = (clone $now)->subMonth();
+        $prevMonthSales = (float)Invoice::whereMonth('invoice_date', $prevMonthDate->month)
+            ->whereYear('invoice_date', $prevMonthDate->year)
+            ->sum('grand_total');
+
+        if ($prevMonthSales > 0) {
+            $salesChangePct = (($currentMonthSales - $prevMonthSales) / $prevMonthSales) * 100;
+            $salesChange = ($salesChangePct >= 0 ? '+' : '') . number_format($salesChangePct, 1) . '%';
+            $salesTrend = $salesChangePct >= 0 ? 'up' : 'down';
+        } else {
+            $salesChange = $currentMonthSales > 0 ? '+100%' : '0.0%';
+            $salesTrend = 'up';
+        }
+
+        // 3. Cash & Bank Balances (Liquid Funds)
+        $cashAccounts = Ledger::cashAccounts()->get();
+        $cashBalance = (float)$cashAccounts->sum('current_balance');
+        $bankAccounts = Ledger::bankAccounts()->get();
+        $bankBalance = (float)$bankAccounts->sum('current_balance');
+        $totalLiquidBalance = $cashBalance + $bankBalance;
+        $activeAccountsCount = $cashAccounts->count() + $bankAccounts->count();
+
+        // 4. Receivables (Customer Outstanding Debtors)
+        $customerLedgers = Ledger::where('category', 'customer')->get();
+        $totalReceivable = 0.0;
+        $pendingCustomerCount = 0;
+
+        foreach ($customerLedgers as $cl) {
+            $bal = (float)$cl->current_balance;
+            if ($bal > 0) {
+                $totalReceivable += $bal;
+                $pendingCustomerCount++;
+            }
+        }
+
+        // Fallback: If party ledgers haven't recalculated yet, compute from Invoices minus Customer Vouchers
+        if ($totalReceivable <= 0 && $totalSalesAmount > 0) {
+            $totalReceived = (float)Voucher::where('status', 'posted')
+                ->where('transaction_mode', 'receipt')
+                ->sum('total_credit');
+            $calcReceivable = max(0, $totalSalesAmount - $totalReceived);
+            if ($calcReceivable > 0) {
+                $totalReceivable = $calcReceivable;
+                $pendingCustomerCount = Invoice::distinct('customer_name')->count('customer_name');
+            }
+        }
+
+        // 5. Total Purchases & Payables (Creditors)
+        $totalPurchases = (float)Voucher::where('voucher_type', 'purchase')->sum('total_debit');
+        $totalPayable = (float)Ledger::where('category', 'supplier')->where('current_balance', '<', 0)->sum('current_balance');
+        $totalPayable = abs($totalPayable);
+
+        // Net Position (Sales - Purchases)
+        $netProfit = $totalSalesAmount - $totalPurchases;
+
+        // 6 Summary KPI Cards
         $kpis = [
             'total_sales' => [
-                'amount' => 1250000.00,
-                'change' => '+12.5%',
-                'trend' => 'up',
-                'subtext' => 'vs. previous period'
+                'amount' => $totalSalesAmount,
+                'weight' => $totalWeightTons,
+                'change' => $salesChange,
+                'trend' => $salesTrend,
+                'subtext' => $totalWeightTons > 0 ? (number_format($totalWeightTons, 2) . ' Tons Dispatched') : ($invoicesCount . ' Total Invoices'),
             ],
             'total_purchases' => [
-                'amount' => 820000.00,
-                'change' => '+8.4%',
+                'amount' => $totalPurchases,
+                'change' => '0.0%',
                 'trend' => 'up',
-                'subtext' => 'vs. previous period'
+                'subtext' => $totalPurchases > 0 ? 'Purchases Recorded' : 'Direct Inward Stock',
             ],
             'total_receivable' => [
-                'amount' => 425000.00,
-                'count' => 24,
-                'subtext' => '24 Outstanding Invoices'
+                'amount' => $totalReceivable,
+                'count' => $pendingCustomerCount,
+                'subtext' => $pendingCustomerCount . ' Pending Parties',
             ],
             'total_payable' => [
-                'amount' => 280000.00,
-                'count' => 18,
-                'subtext' => '18 Pending Bills'
+                'amount' => $totalPayable,
+                'count' => 0,
+                'subtext' => $totalPayable > 0 ? 'Pending Supplier Bills' : 'No Overdue Payables',
             ],
             'cash_bank_balance' => [
-                'amount' => 780500.00,
-                'count' => 4,
-                'subtext' => '4 Active Bank Accounts'
+                'amount' => $totalLiquidBalance,
+                'count' => $activeAccountsCount,
+                'subtext' => $activeAccountsCount . ' Liquid Account(s)',
             ],
             'net_profit' => [
-                'amount' => 430000.00,
-                'change' => '+15.8%',
-                'trend' => 'up',
-                'subtext' => 'vs. previous period'
-            ]
+                'amount' => $netProfit,
+                'change' => $salesChange,
+                'trend' => $salesTrend,
+                'subtext' => 'Revenue Surplus',
+            ],
         ];
 
-        // Payment Due Summary
-        $paymentDueSummary = [
-            'today' => 35000.00,
-            'this_week' => 85000.00,
-            'this_month' => 240000.00,
-            'overdue' => 65000.00,
-        ];
+        // 6. GST Summary (Real Invoice Tax Computations)
+        $cgstTotal = (float)Invoice::sum('cgst_amount');
+        $sgstTotal = (float)Invoice::sum('sgst_amount');
+        $igstTotal = (float)Invoice::sum('igst_amount');
+        $outputGst = $cgstTotal + $sgstTotal + $igstTotal;
+        $inputGst = 0.00; // ITC from purchase bills if available
+        $netGstPayable = max(0, $outputGst - $inputGst);
 
-        // GST Summary (Indian Tax System)
         $gstSummary = [
-            'output_gst' => 145000.00,
-            'input_gst' => 62600.00,
-            'cgst' => 41200.00,
-            'sgst' => 41200.00,
-            'igst' => 0.00,
-            'net_payable' => 82400.00,
+            'output_gst' => $outputGst,
+            'input_gst' => $inputGst,
+            'cgst' => $cgstTotal,
+            'sgst' => $sgstTotal,
+            'igst' => $igstTotal,
+            'net_payable' => $netGstPayable,
         ];
 
-        // Receivable Aging Table Data
-        $receivableAging = [
-            [
-                'customer' => 'ABC Traders',
-                'invoice' => 'INV-2025-084',
-                'due_date' => '05-Feb-2026',
-                'amount' => 85000.00,
-                'days_overdue' => 5,
-                'status' => '1-30 Days',
-                'badge' => 'warning'
-            ],
-            [
-                'customer' => 'XYZ Industries Ltd',
-                'invoice' => 'INV-2025-072',
-                'due_date' => '15-Jan-2026',
-                'amount' => 140000.00,
-                'days_overdue' => 26,
-                'status' => '1-30 Days',
-                'badge' => 'warning'
-            ],
-            [
-                'customer' => 'PQR Pvt Ltd',
-                'invoice' => 'INV-2025-045',
-                'due_date' => '10-Dec-2025',
-                'amount' => 95000.00,
-                'days_overdue' => 62,
-                'status' => '61-90 Days',
-                'badge' => 'danger'
-            ],
-            [
-                'customer' => 'Apex Global Solutions',
-                'invoice' => 'INV-2025-012',
-                'due_date' => '01-Nov-2025',
-                'amount' => 105000.00,
-                'days_overdue' => 101,
-                'status' => '90+ Days',
-                'badge' => 'danger'
-            ]
+        // Payment Due Breakdown
+        $paymentDueSummary = [
+            'today' => 0.00,
+            'this_week' => 0.00,
+            'this_month' => $totalReceivable,
+            'overdue' => 0.00,
         ];
 
-        // Payable Aging Table Data
-        $payableAging = [
-            [
-                'supplier' => 'Mahindra Components',
-                'bill_no' => 'BILL-9041',
-                'due_date' => '12-Feb-2026',
-                'amount' => 65000.00,
-                'days_overdue' => 0,
-                'status' => 'Current',
-                'badge' => 'info'
-            ],
-            [
-                'supplier' => 'Reliance Logistics',
-                'bill_no' => 'BILL-8820',
-                'due_date' => '25-Jan-2026',
-                'amount' => 115000.00,
-                'days_overdue' => 16,
-                'status' => '1-30 Days',
-                'badge' => 'warning'
-            ],
-            [
-                'supplier' => 'Tata Industrial Supplies',
-                'bill_no' => 'BILL-8402',
-                'due_date' => '05-Dec-2025',
-                'amount' => 100000.00,
-                'days_overdue' => 67,
-                'status' => '61-90 Days',
-                'badge' => 'danger'
-            ]
-        ];
+        // 7. Accounts Receivable Aging Table (Real Invoices with Due Calculation)
+        $allInvoices = Invoice::orderBy('invoice_date', 'desc')->take(10)->get();
+        $receivableAging = [];
+        $overdueSum = 0.0;
 
-        // Top Customers
-        $topCustomers = [
-            ['name' => 'ABC Traders', 'invoices' => 14, 'revenue' => 850000.00],
-            ['name' => 'XYZ Industries', 'invoices' => 10, 'revenue' => 620000.00],
-            ['name' => 'PQR Pvt Ltd', 'invoices' => 8, 'revenue' => 480000.00],
-            ['name' => 'Global Tech Solutions', 'invoices' => 6, 'revenue' => 310000.00],
-        ];
+        foreach ($allInvoices as $inv) {
+            $invDate = $inv->invoice_date ? Carbon::parse($inv->invoice_date) : $now;
+            $daysElapsed = (int)$now->diffInDays($invDate);
 
-        // Top Selling Products
-        $topProducts = [
-            ['product' => 'Accounting Software License Pro', 'sku' => 'PRO-ACC-01', 'qty' => 120, 'sales' => 600000.00, 'profit' => 240000.00],
-            ['product' => 'GST Filing Automation Module', 'sku' => 'MOD-GST-02', 'qty' => 85, 'sales' => 340000.00, 'profit' => 136000.00],
-            ['product' => 'Inventory Sync Connector', 'sku' => 'CON-INV-03', 'qty' => 60, 'sales' => 180000.00, 'profit' => 72000.00],
-        ];
+            if ($daysElapsed <= 30) {
+                $status = '0-30 Days';
+                $badge = 'info';
+            } elseif ($daysElapsed <= 60) {
+                $status = '31-60 Days';
+                $badge = 'warning';
+                $overdueSum += (float)$inv->grand_total;
+            } elseif ($daysElapsed <= 90) {
+                $status = '61-90 Days';
+                $badge = 'danger';
+                $overdueSum += (float)$inv->grand_total;
+            } else {
+                $status = '90+ Days';
+                $badge = 'danger';
+                $overdueSum += (float)$inv->grand_total;
+            }
+
+            $receivableAging[] = [
+                'customer' => $inv->customer_name ?: 'General Party',
+                'invoice' => $inv->invoice_no,
+                'due_date' => $invDate->format('d-M-Y'),
+                'amount' => (float)$inv->grand_total,
+                'days_overdue' => $daysElapsed,
+                'status' => $status,
+                'badge' => $badge,
+            ];
+        }
+
+        if ($overdueSum > 0) {
+            $paymentDueSummary['overdue'] = $overdueSum;
+        }
+
+        // Payable Aging (Graceful fallback)
+        $payableAging = [];
+
+        // 8. Top Customers by Revenue & Invoices
+        $topCustomersRaw = Invoice::select(
+            'customer_name as name',
+            DB::raw('count(id) as invoices'),
+            DB::raw('sum(grand_total) as revenue')
+        )
+        ->whereNotNull('customer_name')
+        ->where('customer_name', '!=', '')
+        ->groupBy('customer_name')
+        ->orderByDesc('revenue')
+        ->take(5)
+        ->get();
+
+        $topCustomers = $topCustomersRaw->map(function ($item) {
+            return [
+                'name' => $item->name,
+                'invoices' => (int)$item->invoices,
+                'revenue' => (float)$item->revenue,
+            ];
+        })->toArray();
+
+        // 9. Top Selling Products (From Invoice Items)
+        $topProductsRaw = InvoiceItem::select(
+            'product_name as product',
+            DB::raw('sum(pcs) as qty'),
+            DB::raw('sum(weight_tons) as weight'),
+            DB::raw('sum(amount) as sales')
+        )
+        ->whereNotNull('product_name')
+        ->where('product_name', '!=', '')
+        ->groupBy('product_name')
+        ->orderByDesc('sales')
+        ->take(5)
+        ->get();
+
+        $topProducts = $topProductsRaw->map(function ($p, $idx) {
+            return [
+                'product' => $p->product,
+                'sku' => 'STEEL-' . str_pad($idx + 1, 2, '0', STR_PAD_LEFT),
+                'qty' => (float)$p->qty ?: (float)$p->weight,
+                'sales' => (float)$p->sales,
+                'profit' => (float)$p->sales * 0.15, // estimated margin
+            ];
+        })->toArray();
 
         // Low Stock Inventory Alerts
-        $lowStockAlerts = [
-            ['product' => 'POS Thermal Invoice Paper Rolls', 'sku' => 'PAP-POS-01', 'current_stock' => 12, 'min_stock' => 50, 'status' => 'Critical Low'],
-            ['product' => 'BarCode Scanner Handheld HD', 'sku' => 'HW-SCN-04', 'current_stock' => 4, 'min_stock' => 15, 'status' => 'Low Stock'],
-            ['product' => 'Smart Card NFC Readers', 'sku' => 'HW-NFC-09', 'current_stock' => 8, 'min_stock' => 20, 'status' => 'Low Stock'],
-        ];
+        $lowStockAlerts = [];
 
-        // Recent Transactions Ledger
-        $recentTransactions = [
-            [
-                'date' => '10-Feb-2026',
-                'reference' => 'INV-2026-104',
-                'description' => 'Sales Invoice - ABC Traders',
+        // 10. Recent Transactions Ledger Feed (Invoices + Vouchers unified)
+        $recentInvoices = Invoice::latest('invoice_date')->latest('id')->take(6)->get();
+        $recentVouchers = Voucher::with(['entries.ledger'])->latest('voucher_date')->latest('id')->take(6)->get();
+
+        $unifiedTx = [];
+
+        foreach ($recentInvoices as $inv) {
+            $unifiedTx[] = [
+                'date_raw' => $inv->invoice_date ? Carbon::parse($inv->invoice_date)->format('Y-m-d') : '9999-99-99',
+                'date' => $inv->invoice_date ? Carbon::parse($inv->invoice_date)->format('d-M-Y') : '—',
+                'reference' => $inv->invoice_no,
+                'description' => 'Sales Bill - ' . ($inv->customer_name ?: 'Customer'),
                 'account' => 'Sales Account',
                 'type' => 'Sale',
-                'amount' => 125000.00,
-                'status' => 'Paid',
-                'type_class' => 'success'
-            ],
-            [
-                'date' => '09-Feb-2026',
-                'reference' => 'BILL-2026-088',
-                'description' => 'Raw Material Purchase - Tata Ltd',
-                'account' => 'Purchase Account',
-                'type' => 'Purchase',
-                'amount' => -85000.00,
-                'status' => 'Unpaid',
-                'type_class' => 'danger'
-            ],
-            [
-                'date' => '08-Feb-2026',
-                'reference' => 'PAY-REC-441',
-                'description' => 'Payment Received - XYZ Industries',
-                'account' => 'HDFC Bank Account',
-                'type' => 'Payment Received',
-                'amount' => 140000.00,
-                'status' => 'Cleared',
-                'type_class' => 'success'
-            ],
-            [
-                'date' => '07-Feb-2026',
-                'reference' => 'PAY-MADE-209',
-                'description' => 'Supplier Payment - Reliance Logistics',
-                'account' => 'ICICI Bank Account',
-                'type' => 'Payment Made',
-                'amount' => -60000.00,
-                'status' => 'Cleared',
-                'type_class' => 'danger'
-            ],
-            [
-                'date' => '06-Feb-2026',
-                'reference' => 'EXP-2026-015',
-                'description' => 'Office Rent & Maintenance',
-                'account' => 'Rent Expense Account',
-                'type' => 'Expense',
-                'amount' => -45000.00,
-                'status' => 'Paid',
-                'type_class' => 'warning'
-            ],
-            [
-                'date' => '05-Feb-2026',
-                'reference' => 'JRN-2026-004',
-                'description' => 'Depreciation Journal Adjustment',
-                'account' => 'Fixed Assets Ledger',
-                'type' => 'Journal Entry',
-                'amount' => -15000.00,
-                'status' => 'Posted',
-                'type_class' => 'info'
-            ]
-        ];
+                'amount' => (float)$inv->grand_total,
+                'status' => 'Billed',
+                'type_class' => 'success',
+            ];
+        }
+
+        foreach ($recentVouchers as $v) {
+            $isDebit = ($v->transaction_mode === 'payment');
+            $vLabel = match ($v->voucher_type) {
+                'cash' => 'Cash Voucher',
+                'bank' => 'Bank (' . strtoupper($v->payment_method ?: 'Online') . ')',
+                'general' => 'General Voucher',
+                default => 'Voucher'
+            };
+
+            $unifiedTx[] = [
+                'date_raw' => $v->voucher_date ? Carbon::parse($v->voucher_date)->format('Y-m-d') : '9999-99-99',
+                'date' => $v->voucher_date ? Carbon::parse($v->voucher_date)->format('d-M-Y') : '—',
+                'reference' => $v->voucher_no,
+                'description' => $v->description ?: ($v->party_name ? "{$vLabel} - {$v->party_name}" : $vLabel),
+                'account' => $v->party_name ?: 'General Ledger',
+                'type' => $vLabel,
+                'amount' => (float)($v->total_debit > 0 ? $v->total_debit : $v->total_credit) * ($isDebit ? -1 : 1),
+                'status' => ucfirst($v->status ?: 'posted'),
+                'type_class' => $isDebit ? 'danger' : 'success',
+            ];
+        }
+
+        usort($unifiedTx, function ($a, $b) {
+            return strcmp($b['date_raw'], $a['date_raw']);
+        });
+
+        $recentTransactions = array_slice($unifiedTx, 0, 8);
 
         // Role-based transaction filtering for Sales role
         if ($authUser && $authUser->hasRole('sales') && !$authUser->isAdmin()) {
-            $recentTransactions = array_values(array_filter($recentTransactions, function($t) {
-                return in_array($t['type'], ['Sale', 'Payment Received']);
+            $recentTransactions = array_values(array_filter($recentTransactions, function ($t) {
+                return in_array($t['type'], ['Sale', 'Cash Voucher', 'Bank Voucher']);
             }));
         }
+
+        // 11. Chart Datasets (Monthly Sales vs Collections over Last 6 Months)
+        $chartLabels = [];
+        $chartSalesData = [];
+        $chartCollectionData = [];
+
+        for ($i = 5; $i >= 0; $i--) {
+            $targetDate = (clone $now)->subMonths($i);
+            $monthName = $targetDate->format('M Y');
+            $chartLabels[] = $monthName;
+
+            $mSales = (float)Invoice::whereMonth('invoice_date', $targetDate->month)
+                ->whereYear('invoice_date', $targetDate->year)
+                ->sum('grand_total');
+            $chartSalesData[] = $mSales;
+
+            $mCollections = (float)Voucher::where('status', 'posted')
+                ->where('transaction_mode', 'receipt')
+                ->whereMonth('voucher_date', $targetDate->month)
+                ->whereYear('voucher_date', $targetDate->year)
+                ->sum('total_credit');
+            $chartCollectionData[] = $mCollections;
+        }
+
+        // Payment Method Breakdown for Donut Chart
+        $paymentMethodsRaw = Voucher::where('status', 'posted')
+            ->select('payment_method', DB::raw('count(id) as count'), DB::raw('sum(total_credit) as total'))
+            ->whereNotNull('payment_method')
+            ->groupBy('payment_method')
+            ->get();
+
+        $donutLabels = [];
+        $donutValues = [];
+        foreach ($paymentMethodsRaw as $pm) {
+            $donutLabels[] = strtoupper($pm->payment_method);
+            $donutValues[] = (float)$pm->total;
+        }
+
+        if (empty($donutLabels) || array_sum($donutValues) == 0) {
+            $donutLabels = ['Cash', 'Bank / Online', 'General Voucher'];
+            $donutValues = [
+                (float)Voucher::where('voucher_type', 'cash')->sum('total_credit'),
+                (float)Voucher::where('voucher_type', 'bank')->sum('total_credit'),
+                (float)Voucher::where('voucher_type', 'general')->sum('total_credit'),
+            ];
+            if (array_sum($donutValues) == 0) {
+                $donutValues = [1, 0, 0];
+            }
+        }
+
+        $chartDataJson = json_encode([
+            'sales_purchase' => [
+                'labels' => $chartLabels,
+                'sales' => $chartSalesData,
+                'collections' => $chartCollectionData,
+            ],
+            'payment_modes' => [
+                'labels' => $donutLabels,
+                'values' => $donutValues,
+            ],
+        ]);
 
         return view('admin.dashboard', compact(
             'user',
@@ -251,7 +379,8 @@ class DashboardController extends Controller
             'topCustomers',
             'topProducts',
             'lowStockAlerts',
-            'recentTransactions'
+            'recentTransactions',
+            'chartDataJson'
         ));
     }
 }
